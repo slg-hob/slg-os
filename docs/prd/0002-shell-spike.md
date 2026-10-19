@@ -103,7 +103,7 @@ No-go handling: a failed criterion triggers the matching fallback in section 8, 
 ## 6. Non-functional requirements
 - NFR-S1 Time box and staffing: 10 working days in two phases, assuming two executors (about 20 person-days; the reviews estimated 15 to 20 person-days of work). Phase A (days 1 to 4): compose baseline, WP1, WP3 thin slice (WP3.1 to 3.3), window candidate pre-screen. Checkpoint at day 4: E1 passes with one plugin and the candidate list is reduced to two; otherwise decide continue, narrow, or fallback. Phase B (days 5 to 10): WP2 suite, WP3.4 to 3.7, WP1.10/1.11, manual screen-reader pass, ADRs, report. With a single executor the scope is cut to: WP1 (E1, E2), WP2 with two candidates, WP3.1 to 3.3; the remaining work packages move to the skeleton phase and the report lists them.
 - NFR-S2 Reproducibility: every result is reproducible from the repository with documented commands. Node, package manager, Vite, React, plugin, Playwright, Keycloak and proxy versions and image digests are recorded in the report with verification date and source. Lockfiles per build root, `npm ci` (or frozen-lockfile equivalent) only.
-- NFR-S3 Quality exception: the 80 % coverage gate and the full implementation workflow of `CLAUDE.md` do not apply to disposable code under `spikes/`; the exception is valid only if the owner approves it (S6) and ends with the spike. The acceptance suite (WP2) and the failure and security tests (WP1.5 to 1.7, WP1.11, WP3.6) are automated so the evidence is repeatable.
+- NFR-S3 Quality exception: the 80 % coverage gate and the full implementation workflow of `CLAUDE.md` do not apply to disposable code under `spikes/`; the exception is approved by the owner (S6, recorded in `CLAUDE.md`) and ends with the spike. The acceptance suite (WP2) and the failure and security tests (WP1.5 to 1.7, WP1.11, WP3.6) are automated so the evidence is repeatable.
 - NFR-S4 Security hygiene: pinned lockfiles with integrity hashes, `npm ci --ignore-scripts`, dependency audit and container image scan with zero unaccepted high findings, base images by digest. The test realm uses randomly generated passwords, exact redirect URIs (no wildcards), ports bound to 127.0.0.1, and the export is tagged `SPIKE-ONLY`; a secret scan runs in CI. No real credentials, no real AD data.
 - NFR-S5 i18n: all user-visible strings of the shell prototype use the i18n mechanism in German and English because UI-24 to UI-26 are part of what is verified.
 - NFR-S6 Browsers: latest Chromium and Firefox for automated tests; manual checks with NVDA + Firefox, plus the combinations deployed per S4. Safari is not covered and is recorded as residual risk.
@@ -117,7 +117,7 @@ No-go handling: a failed criterion triggers the matching fallback in section 8, 
 - Manual screen-reader pass logged in the report with a fixed script and recorded versions.
 
 ## 8. Risks and fallback options
-- R1 The Vite Module Federation plugin is immature or incompatible with the current Vite major. F1: Rspack with the official Module Federation 2 tooling while keeping React and Bootstrap; this contradicts the fixed Vite stack in `CLAUDE.md` and ADR-0005 and therefore needs a superseding ADR (S3). F2: native ES modules with import maps and dynamic `import()` for remotes, with shared libraries provided through the import map (import-map `integrity` support per WP1.5a). F3: iframes as the default embedding mode (reverses ADR-0005; needs an SSO, theming and messaging bridge).
+- R1 The Vite Module Federation plugin is immature or incompatible with the current Vite major. Rspack is not a fallback: the owner keeps Vite fixed (S3), so there is no F1. F2: native ES modules with import maps and dynamic `import()` for remotes, with shared libraries provided through the import map (import-map `integrity` support per WP1.5a). F3: iframes as the default embedding mode (reverses ADR-0005; needs an SSO, theming and messaging bridge).
 - R2 No window library satisfies keyboard and ARIA requirements: build in-house, limited to UI-1 to UI-8 first.
 - R3 The strict CSP conflicts with the plugin loader: record the needed exceptions; do not relax NFR-1 without an ADR.
 - R4 Floating-window screen-reader behaviour is poor: offer a "Simplified layout" (user setting) that renders one maximized active window using the UI-12 narrow-mode renderer, with the taskbar as a switcher (`tablist`/`navigation`), no drag/resize/snap, same deep links, persistence and live announcements. Trigger: two or more blockers in WP2.3, or one blocker with no workaround after 2 days. Further escalation (tab-based presentation) changes ADR-0003.
@@ -137,7 +137,7 @@ The spike runs on developer machines and in a throwaway Docker Compose project `
 |---|---|---|---|
 | S1 | Who executes the spike (one or two people) and what is the start date? Determines NFR-S1 scope. | Benjamin Honauer | PRD approval |
 | S2 | Is a commercial window component acceptable at all if it fits (budget, licence review)? | Benjamin Honauer | day 1 |
-| S3 | Decide the principle now: may Rspack replace Vite if the Vite plugin fails (F1, superseding ADR-0005)? | Benjamin Honauer | day 1 |
+| S3 | Decided 2026-10-19: Rspack may not replace Vite; the Vite stack stays fixed. If the Vite plugin fails, only F2 (import maps) and F3 (iframes) remain, both requiring a superseding ADR. | Benjamin Honauer | closed |
 | S4 | Which screen reader and browser combinations are deployed in the company? | Benjamin Honauer | day 1 |
 | S5 | Which reference hardware (CPU/RAM/browser) represents the office PCs? | Benjamin Honauer | before day 1 |
 | S6 | Decided 2026-10-19: the owner approves the NFR-S3 exception to `CLAUDE.md` for code under `spikes/`; it is recorded in `CLAUDE.md`. | Benjamin Honauer | closed |
@@ -153,4 +153,6 @@ Conflicts and how they were resolved:
 - Report location: `docs/spikes/2026-shell-spike-report.md` (avoids the PRD/ADR numbering collision).
 - Library facts (plugin version and Vite compatibility, window libraries, import-map `integrity` support, Keycloak token exchange for public clients, third-party-cookie behaviour) were flagged as unverified by all reviewers and stay unverified until the spike checks them.
 
-Open for a follow-up review pass: none of the perspectives re-reviewed the integrated text.
+Owner decisions after the reviews (2026-10-19): S6 approved (spike exception recorded in `CLAUDE.md`); S3 decided against Rspack, so fallback F1 was removed and only F2 and F3 remain.
+
+Open for a follow-up review pass: none of the perspectives re-reviewed the integrated text or the decisions applied afterwards.
