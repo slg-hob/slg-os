@@ -2,7 +2,7 @@
 
 - PRD: [PRD-0002](../prd/0002-shell-spike.md)
 - Date: 2026-10-19 (executed by Claude Code, owner reviews; decisions S1 to S7 in PRD-0002)
-- Code: branch `spike/shell`, directory `spikes/shell/` (disposable, never merged). Citable state: branch head `b5b9baa`. A local tag `spike-shell-v1` exists, but pushing it was refused by the environment's proxy policy (HTTP 403); PRD-0002 D6 wants the tag after ADR acceptance anyway.
+- Code: branch `spike/shell`, directory `spikes/shell/` (disposable, never merged). Citable code state: commit `b5b9baa` on branch `spike/shell` (later commits only touch the spike README). A local tag `spike-shell-v1` exists, but pushing it was refused by the environment's proxy policy (HTTP 403); PRD-0002 D6 wants the tag after ADR acceptance anyway.
 - Status of this report: independently reviewed by four agents on 2026-10-19 (requirements and evidence, security, UI/UX and accessibility, operations); findings integrated (section 8); awaiting owner acceptance (S7). E4 and E5 are **partial**, not passed.
 
 ## 1. Summary and recommendation
