@@ -24,7 +24,7 @@ Modules are added incrementally and lightly: registering a module and assigning 
 - Backend: latest Java with Spring (Boot, Security, Data, ...) plus further frameworks as needed; built with Maven (ADR-0004)
 - Frontend: React with Vite and Bootstrap; module frontends via Module Federation (ADR-0005)
 - Database: PostgreSQL
-- Identity: Keycloak federating the Active Directory, OIDC (ADR-0001)
+- Identity: Keycloak federating the Active Directory, OIDC (ADR-0001); the core is a backend-for-frontend, tokens never reach the browser (ADR-0012)
 - Deployment: Docker, single server with Docker Compose, fewer than 100 users (ADR-0009); on-prem hosting without cloud runtime dependencies (outbound pull of module images from ghcr.io is allowed, PRD-0001 Q10/Q18)
 - Layout: monorepo for the core (ADR-0004)
 
@@ -95,4 +95,4 @@ Window-based desktop shell (ADR-0003): modules render in shell-managed, resizabl
 
 ## Open decisions (resolve in PRD-0001 review before implementing)
 
-PRD-0001 is reviewed and awaits owner approval. Section 11 records the owner's decisions (e.g. no Kerberos SSO, tokens in memory only, only the current contract major supported, admin-only module registration, ghcr.io for module images, 6-month audit retention) and the few open items (Module Federation plugin spike, works council/DPO sign-off). Version numbers and tools named in the PRD (JDK, Spring Boot, test tools) are proposals until verified when the project skeleton is created; do not treat them as decided.
+PRD-0001 revision 2 (spike findings and ADR-0012 applied, independently reviewed) awaits owner approval. Section 11 records the owner's decisions (e.g. no Kerberos SSO, a backend-for-frontend so that no token reaches the browser (ADR-0012), only the current contract major supported, admin-only module registration, ghcr.io for module images, 6-month audit retention) and the open items (works council/DPO sign-off, Firefox/WebKit/Safari/Edge gates, production-mode Keycloak checks, the gateway session store). ADR-0010 (Module Federation approach) and ADR-0011 (window manager) are proposed, not accepted. Version numbers and tools named in the PRD (JDK, Spring Boot, test tools) are proposals until verified when the project skeleton is created; do not treat them as decided.
