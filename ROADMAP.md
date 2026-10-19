@@ -48,14 +48,15 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 ## Open decisions and who closes them
 | Item | Needed by | Owner |
 |---|---|---|
-| Q23 works council and DPO | before go-live | owner |
-| Q24 remaining risk after the BFF | before go-live | owner |
-| Q25a Firefox/WebKit/Safari checks | phase 1c | platform team |
-| Q25b owner of manual gates (screen reader, Edge, measurements) | phase 1c | owner |
+| Q23 works council and DPO (owner position 2026-10-19: no restriction; formal sign-off kept as go-live item) | before go-live | owner |
+| Q24 remaining risk after the BFF: **accepted 2026-10-19** | closed | owner |
+| Q25a Firefox checks (Safari not required, decided 2026-10-19) | phase 1c | platform team |
+| Q25b manual gates: **owner and team, decided 2026-10-19** | phase 1c | owner |
 | Q26 token exchange or down-scoping in production Keycloak | phase 1a | platform team |
-| Q27 Keycloak host name, certificates, internal back-channel route | phase 1a | owner |
+| Q27 production Keycloak host name and AD-CA certificates (CI and local use test names, decided 2026-10-19) | before go-live | owner |
 | Q28 confirm PostgreSQL session store | phase 1a | platform team |
-| Q30 SMTP relay for alerts | deferred | owner |
+| Q30 SMTP relay for alerts: **no e-mail alerts, decided 2026-10-19** | closed | owner |
+| Q47 pilot module (Lead-Radar-Plattform) is not a Spring backend: path for the module contract | before phase 1b milestone B6 | owner |
 | Enable branch protection on `main` ([instructions](docs/branch-protection.md)) | now | owner |
 
 ## Main risks
