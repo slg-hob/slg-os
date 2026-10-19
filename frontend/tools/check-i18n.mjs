@@ -21,6 +21,12 @@ export function flatten(value, prefix = '') {
   return out;
 }
 
+function styleOf(element) {
+  const style = element.style;
+  if (!style) return '';
+  return `(${typeof style === 'string' ? style : (style.pattern ?? '')})`;
+}
+
 /** Collects argument signatures such as "name:plain" or "count:plural[one,other]" from an ICU AST. */
 export function signatures(ast, into = new Set()) {
   for (const element of ast) {
@@ -29,11 +35,11 @@ export function signatures(ast, into = new Set()) {
         into.add(`${element.value}:plain`);
         break;
       case TYPE.number:
-        into.add(`${element.value}:number`);
+        into.add(`${element.value}:number${styleOf(element)}`);
         break;
       case TYPE.date:
       case TYPE.time:
-        into.add(`${element.value}:date`);
+        into.add(`${element.value}:date${styleOf(element)}`);
         break;
       case TYPE.select:
       case TYPE.plural: {
@@ -134,9 +140,23 @@ export function checkLocales(root) {
   return problems;
 }
 
+/** Entry pages may not carry literal text in attributes that assistive technology announces. */
+export function checkHtml(root) {
+  const problems = [];
+  for (const pkg of readdirSync(root)) {
+    const file = join(root, pkg, 'index.html');
+    if (!existsSync(file)) continue;
+    const html = readFileSync(file, 'utf8');
+    for (const match of html.matchAll(/\s(aria-label|aria-description|alt|placeholder|title)\s*=\s*"([^"]+)"/g)) {
+      problems.push(`${pkg}/index.html: literal ${match[1]}="${match[2]}" (use the i18n bundle)`);
+    }
+  }
+  return problems;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname);
-  const problems = checkLocales(root);
+  const problems = [...checkLocales(root), ...checkHtml(root)];
   if (problems.length > 0) {
     console.error(problems.map((p) => `- ${p}`).join('\n'));
     process.exit(1);

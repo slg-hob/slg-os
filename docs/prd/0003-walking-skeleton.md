@@ -248,7 +248,7 @@ e2e/                       Playwright tests, k6 scripts
 docs/                      as today, plus docs/verification/
 ```
 
-Java base package `com.systemlogistics.slgos` is a proposal; changing it later is cheap only before M2 (Q33).
+Java base package `de.systemlogistics.slgos` (decided in M1, Q33, see ADR-0013).
 
 ### 7.2 Core API (all under `/core`, versioned)
 | Path | Purpose |
@@ -350,8 +350,8 @@ Data protection: the skeleton processes personal data only in the form of the E2
 |---|---|---|---|
 | Q31 | Test directory for a real-AD smoke test: a test OU with dedicated test accounts, a read-only bind account, the LDAPS certificate chain, a staging host under company control, and confirmation (with the DPO) that processing these test accounts is acceptable before Q23 is closed (Q20 covers the operator of the account). An external gate, not blocking the skeleton merge | Benjamin Honauer | M6c |
 | Q32 | Host names for development/staging (shell and Keycloak, same registrable domain or not), and whether a staging host separate from production exists. This closes Q27 for the skeleton; production names and Windows AD CA certificates stay with Q27 | Benjamin Honauer | M2 |
-| Q33 | Java group id and base package (`com.systemlogistics.slgos` proposed) | platform team | M1 |
-| Q34 | Choice of dependency scanner, image scanner, secret scanner, SBOM tool, load-test tool and backup encryption tool; proposals are made in ADR-0013 and verified against official documentation | platform team | M1 |
+| Q33 | Java group id and base package (`com.systemlogistics.slgos` proposed) | platform team | M1, decided: `de.systemlogistics.slgos` (ADR-0013) |
+| Q34 | Choice of dependency scanner, image scanner, secret scanner, SBOM tool, load-test tool and backup encryption tool; proposals are made in ADR-0013 and verified against official documentation | platform team | M1, decided: Trivy (ADR-0013) |
 | Q35 | Permissions for background work of a module for a user without a live session: the skeleton returns "no permissions" for such calls; a module that needs more (scheduled jobs on behalf of a user) is a phase 1b design topic | platform team | before the first module with jobs |
 | Q37 | Fallback if the 200 interstitial does not keep the `SameSite=Strict` cookie in Firefox or WebKit (SK-3 AC3): `SameSite=Lax` for the `__Host-` cookie, with the CSRF consequence recorded in ADR-0015 | platform team | M2 |
 | Q36 | Is a Mac available for the WebKit/Safari manual check (Q25a), and who runs it? Playwright WebKit in CI is not Safari | Benjamin Honauer | phase 1c |

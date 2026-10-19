@@ -63,6 +63,8 @@
         </executions>
       </plugin>
 
+      <!-- JaCoCo skips its check when no data exists, so a module without tests would pass; see profile require-coverage-data. -->
+
       <!-- Unit and integration test data go into one exec file so one report and one gate cover both. -->
       <plugin>
         <groupId>org.jacoco</groupId>
@@ -124,4 +126,37 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- Every module with sources must have produced coverage data: a module without tests fails instead of being skipped. -->
+    <profile>
+      <id>require-coverage-data</id>
+      <activation>
+        <file><exists>${basedir}/src</exists></file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>require-coverage-data</id>
+                <phase>verify</phase>
+                <goals><goal>enforce</goal></goals>
+                <configuration>
+                  <rules>
+                    <requireFilesExist>
+                      <message>No JaCoCo data: the module has no executed tests, so the coverage gate would be skipped.</message>
+                      <files><file>${project.build.directory}/jacoco.exec</file></files>
+                    </requireFilesExist>
+                  </rules>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

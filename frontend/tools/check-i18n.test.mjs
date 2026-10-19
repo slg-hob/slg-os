@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { checkLocales, flatten, signatures } from './check-i18n.mjs';
+import { checkHtml, checkLocales, flatten, signatures } from './check-i18n.mjs';
 import { parse } from '@formatjs/icu-messageformat-parser';
 
 function workspace(files) {
@@ -79,4 +79,18 @@ test('invalid JSON is reported', () => {
 test('packages without locales are ignored', () => {
   const root = workspace({ 'contracts/src/x.ts': 'export {}' });
   assert.deepEqual(checkLocales(root), []);
+});
+
+test('number and date styles must match between languages', () => {
+  const root = workspace(pair({ a: '{n, number, percent}' }, { a: '{n, number}' }));
+  assert.match(checkLocales(root).join('\n'), /different arguments/);
+  const same = workspace(pair({ a: '{n, number, percent}' }, { a: '{n, number, percent}' }));
+  assert.deepEqual(checkLocales(same), []);
+});
+
+test('index.html may not carry literal announced attributes', () => {
+  const root = workspace({ 'shell/index.html': '<html><head><title>SLG OS</title></head><body><img alt="Logo"></body></html>' });
+  assert.match(checkHtml(root).join('\n'), /literal alt="Logo"/);
+  const clean = workspace({ 'shell/index.html': '<html><head><title>SLG OS</title></head><body></body></html>' });
+  assert.deepEqual(checkHtml(clean), []);
 });

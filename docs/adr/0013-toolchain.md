@@ -1,6 +1,6 @@
 # 0013. Repository layout, toolchain and CI tooling
 
-- Status: Accepted
+- Status: Proposed
 - Date: 2026-10-19
 
 ## Context
@@ -65,6 +65,14 @@ PRD-0003 (walking skeleton) asks for the repository layout, the pinned toolchain
 - CI scripts are dependency-free Node ES modules with `node:test` and a line-coverage minimum of 80 %; the frontend tools package uses the same runner.
 - Load testing (k6), backup encryption (`age`) and shell script tests (`bats`) are chosen when their milestones start, not here.
 
+**Layout and deferred items**
+- npm commands run in `frontend/` (there is no root `package.json`), unlike the root-level form in PRD-0003 SK-1 AC1; the commands are listed in `README.md` and `CLAUDE.md`.
+- The install-script allowlist is empty: `npm ci --ignore-scripts` and the test run prove the toolchain works without install scripts.
+- Deferred to M2: `docker compose build`, image digests in `deploy/` and their check, `mvn help:effective-pom` check of the coverage rule, version rows for Playwright, axe, Module Federation, Bootstrap, Keycloak, PostgreSQL and nginx.
+- Deferred to M4 (SK-11): lint of `.ts` files for user-visible strings; `index.html` is checked for literal announced attributes, and its `<title>` is the product name "SLG OS", a brand constant. The shell sets `lang` at start.
+- The self-test faults `skipped-job` and `critical-coverage` feed fixtures to the scripts; an end-to-end skipped job in the real workflow is not simulated.
+- A dependency bot (`.github/dependabot.yml`) proposes updates for actions, Maven and npm.
+
 **Data access (PRD-0003 D6):** Spring Data JDBC / `JdbcClient` with explicit SQL, no JPA, because sessions, locks and the audit privileges need explicit SQL. Applied when the first persistence code is written (M2).
 
 **Supply-chain rules**
@@ -76,7 +84,8 @@ PRD-0003 (walking skeleton) asks for the repository layout, the pinned toolchain
 ## Consequences
 - A version change is one edit of the JSON file plus the build file, and the table in this ADR is regenerated; CI fails otherwise.
 - The fallbacks fixed in advance remain: JDK 21 (change `java.version`, the enforcer rule and the CI `setup-java` version), TypeScript 6.x, Node 22.
-- The CI gate can only be weakened by a pull request that the code owner reviews (branch protection with code owner review is an owner setting, see `docs/branch-protection.md`).
+- `CODEOWNERS` names the owner for the gate and build configuration. Enforcing it needs a second maintainer (an author cannot approve their own pull request), so until then the gate is protected by the owner's own review of such changes; this is an accepted gap (see `docs/branch-protection.md`). `@slg-hob` is a personal account, which is a valid code owner.
+- The coverage regression baseline moves with every merge to `main` (limit 2 points per merge, not cumulative); the 80 % and 90 % floors bound the drift.
 - Trivy and the pinned actions must be re-checked when they are updated; a bot proposes the updates, they are reviewed like code.
 
 ## Alternatives considered

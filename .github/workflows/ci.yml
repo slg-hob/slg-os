@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
@@ -42,6 +44,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
@@ -61,6 +65,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
@@ -90,6 +96,8 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
@@ -108,8 +116,8 @@ jobs:
       - name: Build
         run: npm run build
       - name: Coverage report
-        run: node ../scripts/ci/coverage.mjs report ../coverage-frontend.json
-        working-directory: frontend
+        run: node scripts/ci/coverage.mjs report coverage-frontend.json
+        working-directory: .
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: coverage-frontend
@@ -135,14 +143,19 @@ jobs:
       - name: Fetch the baseline written by main
         id: baseline
         run: |
-          if git fetch --depth=1 origin ci-baseline:refs/remotes/origin/ci-baseline 2>/dev/null; then
+          # exit 2 of ls-remote means the branch does not exist (not seeded yet); any other failure must not pass as "unseeded"
+          set +e; git ls-remote --exit-code --heads origin ci-baseline >/dev/null; rc=$?; set -e
+          if [ "$rc" = 2 ]; then
+            echo "state=unseeded" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" != 0 ]; then
+            echo "::error::could not reach the repository to read the coverage baseline"; exit 1
+          else
+            git fetch --depth=1 origin ci-baseline:refs/remotes/origin/ci-baseline
             if git show origin/ci-baseline:baseline.json > coverage-baseline.json; then
               echo "state=present" >> "$GITHUB_OUTPUT"
             else
               echo "state=broken" >> "$GITHUB_OUTPUT"
             fi
-          else
-            echo "state=unseeded" >> "$GITHUB_OUTPUT"
           fi
       - name: Compare with the baseline
         env:
@@ -172,11 +185,19 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: coverage-current
       - name: Publish baseline.json to the branch ci-baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # a newer commit on main will write its own baseline; never overwrite it with a stale one
+          if [ "$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | cut -f1)" != "$GITHUB_SHA" ]; then
+            echo "a newer commit exists on main, skipping"; exit 0
+          fi
           mkdir ../baseline && cp coverage-current.json ../baseline/baseline.json
           cd ../baseline
           git init -q -b ci-baseline
@@ -184,7 +205,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add baseline.json
           git commit -q -m "Coverage baseline for ${GITHUB_SHA}"
-          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" ci-baseline
+          git -c http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}" push -q --force "https://github.com/${GITHUB_REPOSITORY}.git" ci-baseline
 
   e2e:
     name: End-to-end tests (empty set until the harness arrives in M2)
@@ -192,6 +213,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - name: Run the scenarios if there are any
         run: |
           if ls e2e/specs/*.spec.ts >/dev/null 2>&1; then
@@ -205,13 +228,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: 25
           cache: maven
       - name: Populate the local Maven repository (the scanner resolves versions from it, not from Maven Central)
-        run: ./mvnw -q dependency:resolve
+        run: ./mvnw -q compile dependency:resolve
       - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
         with:
           version: ${{ env.TRIVY_VERSION }}
@@ -232,6 +257,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - name: Validate every compose file
         run: |
           shopt -s nullglob
@@ -247,6 +274,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22

@@ -11,6 +11,11 @@ on:
       - 'ci/**'
       - 'scripts/ci/**'
       - '.github/workflows/**'
+      - 'pom.xml'
+      - 'backend/*/pom.xml'
+      - 'frontend/vitest.shared.ts'
+      - 'frontend/eslint.config.js'
+      - 'frontend/package.json'
 
 permissions:
   contents: read
@@ -25,6 +30,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
@@ -37,7 +44,7 @@ jobs:
         with:
           version: ${{ env.TRIVY_VERSION }}
       - name: Populate the local Maven repository for the scanner
-        run: ./mvnw -q dependency:resolve
+        run: ./mvnw -q compile dependency:resolve
       - name: Install frontend dependencies
         run: npm ci --ignore-scripts
         working-directory: frontend

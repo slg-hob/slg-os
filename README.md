@@ -24,6 +24,16 @@ SLG Operating System: a locally hosted, web-based platform with an OS-like deskt
 - [`docs/reviews/`](docs/reviews/): review checklists for specifications, implementations and module registration
 - [`docs/branch-protection.md`](docs/branch-protection.md): branch protection settings for `main` (pull request and CI gate)
 
+## Build and test
+
+```bash
+./mvnw verify                                  # backend: build, unit and integration tests, JaCoCo gate (JDK 25)
+cd frontend && npm ci --ignore-scripts         # frontend dependencies from the lock file
+npm run lint && npm run typecheck && npm run i18n:check && npm run test:coverage && npm run build
+```
+
+All commands, including the CI script checks, are listed in [`CLAUDE.md`](CLAUDE.md).
+
 ## Workflow in short
 
 PRD draft, independent multi-perspective review, implementation, tests (global coverage >= 80 %), independent multi-perspective review. Every change goes through a feature branch and a pull request; the CI check `gate` must be green before merge to `main`. Code and PRDs in English, UI strictly bilingual (German/English) via i18n.

@@ -11,3 +11,16 @@
 /docs/adr/0013-versions.json      @slg-hob
 /deploy/                          @slg-hob
 /design/                          @slg-hob
+/mvnw                             @slg-hob
+/mvnw.cmd                         @slg-hob
+/backend/*/pom.xml                @slg-hob
+/frontend/package.json            @slg-hob
+/frontend/package-lock.json       @slg-hob
+/frontend/.npmrc                  @slg-hob
+/frontend/tsconfig.base.json      @slg-hob
+/frontend/*/vitest.config.ts      @slg-hob
+/.gitignore                       @slg-hob
+/.markdownlint-cli2.jsonc         @slg-hob
+/docs/branch-protection.md        @slg-hob
+/docs/adr/                        @slg-hob
+/.github/dependabot.yml           @slg-hob
