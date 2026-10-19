@@ -2,6 +2,7 @@ import { Component, useCallback, useEffect, useMemo, useState } from 'react';
 import { ShellProvider } from 'spike-sdk';
 import { shellMessages, loadModuleBundle, lookup } from './i18n.js';
 import { fetchRegistry, loadModuleComponent } from './federation.js';
+import { initAuth, getAccessToken, signOut, mgr } from './auth.js';
 
 class WindowBoundary extends Component {
   state = { error: null };
@@ -55,7 +56,9 @@ function ModuleWindow({ m, shell, s, onClose }) {
         {!error && !Comp && <p className="p-3 mb-0">{s.loading}</p>}
         {!error && Comp && (
           <WindowBoundary s={s} onRetry={() => setAttempt((a) => a + 1)}>
-            <Comp />
+            <ShellProvider value={{ ...shell, getAccessToken: () => getAccessToken(`mod-${m.id}`) }}>
+              <Comp />
+            </ShellProvider>
           </WindowBoundary>
         )}
       </div>
@@ -64,10 +67,28 @@ function ModuleWindow({ m, shell, s, onClose }) {
 }
 
 export default function App() {
+  const [auth, setAuth] = useState({ status: 'init' });
+  useEffect(() => {
+    initAuth().then((r) => setAuth(r.user ? { status: 'ready', user: r.user } : { status: r.frame ? 'frame' : 'redirect' }))
+      .catch((e) => setAuth({ status: 'error', error: String(e.message) }));
+    const onExpired = () => setAuth((a) => ({ ...a, status: 'expired' }));
+    const onLoaded = (user) => setAuth({ status: 'ready', user });
+    mgr.events.addAccessTokenExpired(onExpired);
+    mgr.events.addUserLoaded(onLoaded);
+    return () => { mgr.events.removeAccessTokenExpired(onExpired); mgr.events.removeUserLoaded(onLoaded); };
+  }, []);
+  if (auth.status === 'ready' || auth.status === 'expired') return <Desktop auth={auth} />;
+  if (auth.status === 'error') return <p role="alert" data-testid="auth-error">{auth.error}</p>;
+  return <p data-testid="auth-pending">…</p>;
+}
+
+function Desktop({ auth }) {
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
   const [registry, setRegistry] = useState({ accepted: [], rejected: [] });
-  const [open, setOpen] = useState([]);
+  // UI-6 (spike): open windows are persisted per browser session and restored after reload.
+  const [open, setOpen] = useState(() => JSON.parse(sessionStorage.getItem('spike.open') || '[]'));
+  useEffect(() => { sessionStorage.setItem('spike.open', JSON.stringify(open)); }, [open]);
   const [, bump] = useState(0);
   const s = shellMessages[language];
 
@@ -82,7 +103,7 @@ export default function App() {
 
   const t = useCallback((ns, key) => lookup(ns, language, key), [language]);
   const shell = useMemo(
-    () => ({ t, theme, language, getAccessToken: () => null }),
+    () => ({ t, theme, language, getAccessToken }),
     [t, theme, language]
   );
 
@@ -102,7 +123,9 @@ export default function App() {
             </li>
           ))}
         </ul>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 align-items-center">
+          <span className="navbar-text" data-testid="user">{auth.user.profile.preferred_username}</span>
+          <button className="btn btn-sm btn-outline-secondary" data-testid="sign-out" onClick={() => signOut()}>Sign out</button>
           <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-theme" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
             {s.theme}: {theme === 'light' ? s.light : s.dark}
           </button>
@@ -111,6 +134,11 @@ export default function App() {
           </button>
         </div>
       </nav>
+      {auth.status === 'expired' && (
+        <div className="alert alert-warning m-3" role="alert" data-testid="session-expired">
+          Session expired. <button className="btn btn-link p-0" onClick={() => mgr.signinSilent().catch(() => mgr.signinRedirect())}>Sign in again</button>
+        </div>
+      )}
       <main className="container-fluid py-3">
         {registry.rejected.length > 0 && (
           <div className="alert alert-warning" data-testid="rejected">{registry.rejected.map((r) => `${r.id}: ${r.error}`).join('; ')}</div>

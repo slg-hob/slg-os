@@ -10,8 +10,9 @@ rm -f "$ROOT/.run/svc.pids"
 node "$ROOT/scripts/register.mjs"
 nohup node "$ROOT/scripts/shell-server.mjs" > "$ROOT/.run/shell-server.log" 2>&1 &
 echo $! > "$ROOT/.run/shell-server.pid"
-for svc in evil-upstream stub-server; do
-  nohup node "$ROOT/scripts/$svc.mjs" > "$ROOT/.run/$svc.log" 2>&1 &
+for svcpath in scripts/evil-upstream.mjs stub/server.mjs; do
+  svc=$(basename "$svcpath" .mjs)
+  nohup node "$ROOT/$svcpath" > "$ROOT/.run/$svc.log" 2>&1 &
   echo $! >> "$ROOT/.run/svc.pids"
 done
 "$ROOT/scripts/proxy.sh" start

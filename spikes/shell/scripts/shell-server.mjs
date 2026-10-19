@@ -20,7 +20,7 @@ createServer((req, res) => {
     "default-src 'none'",
     `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self'", "connect-src 'self'", "img-src 'self'", "font-src 'self'", "frame-src 'self'",
-    "form-action 'self'", "worker-src 'none'", "base-uri 'none'", "object-src 'none'", "frame-ancestors 'none'",
+    "form-action 'self'", "worker-src 'none'", "base-uri 'none'", "object-src 'none'", "frame-ancestors 'self'",
   ].join('; ');
   res.writeHead(200, {
     'Content-Type': 'text/html; charset=utf-8',

@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  globalSetup: './global-setup.js',
   testDir: './specs',
   timeout: 30000,
   fullyParallel: false,
@@ -10,6 +11,7 @@ export default defineConfig({
     baseURL: 'https://localhost:8443',
     ignoreHTTPSErrors: true,
     trace: 'retain-on-failure',
+    storageState: '.auth/alice.json',
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
 });

@@ -5,3 +5,4 @@ dist/
 keycloak/dist/
 test-results/
 playwright-report/
+.auth/

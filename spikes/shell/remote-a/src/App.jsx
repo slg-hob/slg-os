@@ -6,7 +6,15 @@ function Crash() {
 }
 
 export default function App() {
-  const { t, theme, language } = useShell();
+  const { t, theme, language, getAccessToken } = useShell();
+  const [api, setApi] = useState('');
+  const callApi = async () => {
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/stub/mod-a/data', { headers: { Authorization: `Bearer ${token}` } });
+      setApi(`${res.status}`);
+    } catch (e) { setApi(`error: ${e.message}`); }
+  };
   const [crash, setCrash] = useState(false);
   const [text, setText] = useState('');
   if (crash) return <Crash />;
@@ -19,7 +27,9 @@ export default function App() {
       </p>
       <label className="form-label" htmlFor="a-input">{t('a', 'input')}</label>
       <input id="a-input" className="form-control mb-2" value={text} onChange={(e) => setText(e.target.value)} />
-      <button className="btn btn-danger btn-sm" onClick={() => setCrash(true)}>{t('a', 'crash')}</button>
+      <button className="btn btn-danger btn-sm me-2" onClick={() => setCrash(true)}>{t('a', 'crash')}</button>
+      <button className="btn btn-primary btn-sm" data-testid="a-call-api" onClick={callApi}>API</button>
+      <span className="ms-2" data-testid="a-api-result">{api}</span>
     </div>
   );
 }
