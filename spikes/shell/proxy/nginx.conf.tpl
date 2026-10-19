@@ -25,35 +25,47 @@ http {
     # Security headers for shell and modules (Keycloak keeps its own headers).
     set $csp "@CSP@";
 
+    # The HTML document comes from shell-server (nonce CSP + import map with integrity); assets are static.
+    location = / { proxy_pass http://127.0.0.1:5400; }
+    location = /index.html { proxy_pass http://127.0.0.1:5400; }
     location / {
+      add_header X-Content-Type-Options nosniff always;
+      root @ROOT@/shell/dist;
+      try_files $uri @shell;   # History API fallback (UI-5, Q19)
+    }
+    location @shell { proxy_pass http://127.0.0.1:5400; }
+
+    # Integrity fixtures (WP1.5): same strict CSP, and a copy without CSP to observe raw browser SRI behaviour.
+    location /fixtures/ {
       add_header @CSP_HEADER@ $csp always;
       add_header X-Content-Type-Options nosniff always;
-      add_header Referrer-Policy no-referrer always;
-      add_header Strict-Transport-Security "max-age=31536000" always;
-      root @ROOT@/shell/dist;
-      try_files $uri /index.html;   # History API fallback (UI-5, Q19)
+      alias @ROOT@/fixtures/;
+    }
+    location /fixtures-open/ {
+      add_header X-Content-Type-Options nosniff always;
+      alias @ROOT@/fixtures/;
     }
 
     location /registry/ {
       add_header X-Content-Type-Options nosniff always;
       add_header Cache-Control "no-store" always;
-      alias @ROOT@/registry/;
+      alias @ROOT@/.run/registry/;
     }
 
     location /modules/a/remote/ {
       add_header @CSP_HEADER@ $csp always;
       add_header X-Content-Type-Options nosniff always;
-      alias @ROOT@/remote-a/dist/;
+      alias @ROOT@/.run/store/a/current/;
     }
     location /modules/b/remote/ {
       add_header @CSP_HEADER@ $csp always;
       add_header X-Content-Type-Options nosniff always;
-      alias @ROOT@/remote-b/dist/;
+      alias @ROOT@/.run/store/b/current/;
     }
     location /modules/mismatch/remote/ {
       add_header @CSP_HEADER@ $csp always;
       add_header X-Content-Type-Options nosniff always;
-      alias @ROOT@/remote-mismatch/dist/;
+      alias @ROOT@/.run/store/mismatch/current/;
     }
 
     location /api/stub/ {
