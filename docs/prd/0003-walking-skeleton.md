@@ -1,6 +1,6 @@
 # PRD-0003: Walking skeleton (phase 1a)
 
-- Status: Reviewed (four independent reviews integrated, awaiting owner approval)
+- Status: **Approved** by the owner on 2026-10-19 (independently reviewed by requirements, security, UI/UX and operations agents)
 - Owner: Benjamin Honauer
 - Date: 2026-10-19
 - Related ADRs: 0001, 0002, 0004, 0005, 0009, 0010 (proposed), 0011 (proposed), 0012. New ADRs written during the skeleton: see section 7.5.
@@ -397,3 +397,5 @@ Resolutions where reviews differed or the author chose:
 - Milestone split: operations asked for M3 and M6 to be split and the E2E harness to move to M2; the requirements review asked for browsers from M2; both applied.
 
 Not verifiable before implementation: the SameSite behaviour of the 200 interstitial (M2), JDK 25 with JaCoCo and Spring Boot 4.1 (M1), peer dependencies of the frontend set (M1), Keycloak 26.8 with PostgreSQL 17, token exchange v2 (SK-19), hosted-runner capacity for the E2E stack, whether the gateway budget holds with `auth_request`.
+
+Owner approval 2026-10-19. PRD-0001 revision 3 (items C1 to C14) follows with the first skeleton milestone.
