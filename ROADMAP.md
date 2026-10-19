@@ -8,6 +8,7 @@ Legend: **Done**, **Next**, **Planned**, **Later**. Owner gates (needs a decisio
 - Done: ADR-0001 to 0012 (identity, modules, UI, stack, permissions, trust, audit, deployment, Module Federation, window manager, backend-for-frontend).
 - Done: [PRD-0001](docs/prd/0001-platform-core.md) platform core, approved in revision 2.
 - Done: [PRD-0002](docs/prd/0002-shell-spike.md) spike and [report](docs/spikes/2026-shell-spike-report.md). Result: Module Federation with Vite is viable in Chromium; in-house window manager; tokens must stay on the server.
+- Done: working rules with feature branches, pull requests and a CI quality gate (`gate`) as merge condition; documentation checks run today, build, test and coverage jobs join with the skeleton.
 - Open from the spike, closed during phases 1a to 1c: ADR-0010 and ADR-0011 are proposed and become accepted when their gaps are closed (production-mode Keycloak, Firefox/WebKit/Safari checks, manual screen-reader pass, window-manager gaps).
 
 ## Phase 1a: Walking skeleton (next)
