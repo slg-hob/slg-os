@@ -29,7 +29,7 @@ class WindowBoundary extends Component {
 }
 
 // Content of one window. The module component loads when the window is first visible (lazy restore, UI-6).
-function ModuleContent({ w, m, visible, shell, s, guardApi }) {
+function ModuleContent({ w, m, visible, shell, s, guardRef }) {
   const [Comp, setComp] = useState(null);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
@@ -48,8 +48,8 @@ function ModuleContent({ w, m, visible, shell, s, guardApi }) {
   }, [m, attempt, visible && true]); // language changes must not remount the module (state is kept, UI-25)
 
   const bound = useMemo(
-    () => ({ ...shell, getAccessToken: () => getAccessToken(`mod-${m.id}`), setCloseGuard: (fn) => guardApi?.set(w.id, fn) }),
-    [shell, m.id, w.id, guardApi]
+    () => ({ ...shell, getAccessToken: () => getAccessToken(`mod-${m.id}`), setCloseGuard: (fn) => guardRef.current?.set(w.id, fn) }),
+    [shell, m.id, w.id, guardRef]
   );
 
   if (error) {
@@ -93,8 +93,12 @@ function Desktop({ auth }) {
   const [registry, setRegistry] = useState({ accepted: [], rejected: [] });
   const [, bump] = useState(0);
   const guardApi = useRef(null);
+  const registerGuard = useCallback((api) => { guardApi.current = api; }, []);
   const s = shellMessages[language];
-  const engine = new URLSearchParams(location.search).get('wm') === 'rnd' ? 'rnd' : 'inhouse';
+  // Engine is chosen with ?wm=rnd and remembered for the session (deep links drop the query string).
+  const q = new URLSearchParams(location.search).get('wm');
+  if (q) sessionStorage.setItem('spike.engine', q);
+  const engine = sessionStorage.getItem('spike.engine') === 'rnd' ? 'rnd' : 'inhouse';
 
   useEffect(() => { document.documentElement.setAttribute('data-bs-theme', theme); }, [theme]);
   useEffect(() => { document.documentElement.lang = language; }, [language]);
@@ -109,9 +113,9 @@ function Desktop({ auth }) {
   const shell = useMemo(() => ({ t, theme, language, getAccessToken }), [t, theme, language]);
 
   const nav = ({ openModule }) => (
-    <nav className="navbar navbar-expand bg-body-tertiary px-3" aria-label={s.launcher}>
+    <nav className="navbar navbar-expand bg-body-tertiary px-3 flex-wrap gap-2" aria-label={s.launcher}>
       <span className="navbar-brand">SLG OS spike</span>
-      <ul className="navbar-nav me-auto" data-testid="launcher">
+      <ul className="navbar-nav me-auto flex-wrap" data-testid="launcher">
         {registry.accepted.length === 0 && <li className="nav-item text-body-secondary">{s.noModules}</li>}
         {registry.accepted.map((m) => (
           <li className="nav-item" key={m.id}>
@@ -150,8 +154,8 @@ function Desktop({ auth }) {
         s={s}
         engine={engine}
         nav={nav}
-        registerGuard={(api) => { guardApi.current = api; bump((n) => n + 1); }}
-        renderContent={(w, m, visible) => <ModuleContent w={w} m={m} visible={visible} shell={shell} s={s} guardApi={guardApi.current} />}
+        registerGuard={registerGuard}
+        renderContent={(w, m, visible) => <ModuleContent w={w} m={m} visible={visible} shell={shell} s={s} guardRef={guardApi} />}
       />
     </ShellProvider>
   );
