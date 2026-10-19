@@ -1,6 +1,6 @@
 # Spike: shell, Module Federation, window manager (PRD-0002)
 
-Disposable code. Never merged into `main`. Citable state: branch `spike/shell`, head `b5b9baa` (a local tag `spike-shell-v1` exists, but pushing it was refused). Findings: `docs/spikes/2026-shell-spike-report.md` on branch `claude/spike-report` (on `main` after merge).
+Disposable code. Never merged into `main`. Citable state: branch `spike/shell`, code state `b5b9baa`, later commits only touch this README (a local tag `spike-shell-v1` exists, but pushing it was refused). Findings: `docs/spikes/2026-shell-spike-report.md` on branch `claude/spike-report` (on `main` after merge).
 
 ## Run (native; this environment has no Docker daemon, so Compose was not used)
 ```
