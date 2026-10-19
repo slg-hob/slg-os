@@ -1,0 +1,5 @@
+
+Running 2 tests using 1 worker
+
+WP1.10 lan {"summary":{"cold":{"desktopMedianMs":451,"desktopP95Ms":531,"openMedianMs":286,"openP95Ms":320},"warm":{"desktopMedianMs":242,"desktopP95Ms":266,"openMedianMs":106,"openP95Ms":133}},"transfer":{"files":35,"encodedKB":849,"transferKB":859}}
+  ✓  1 [chromium] › specs/wp1-perf.spec.js:13:7 › WP1.10 timing profile lan (29.1s)
