@@ -1,6 +1,6 @@
 # PRD-0004: Platform capabilities (phase 1b)
 
-- Status: Reviewed (four independent reviews integrated, awaiting owner approval)
+- Status: **Approved** by the owner on 2026-10-19 (independently reviewed by requirements, security, UI/UX and operations agents); Q47 stays open
 - Owner: Benjamin Honauer
 - Date: 2026-10-19
 - Related ADRs: 0001, 0002, 0004 to 0009, 0010 and 0011 (proposed, decided by the skeleton evidence), 0012; ADR-0013 to 0016 and 0017 (written by the skeleton, PRD-0003 section 7.5). New ADRs written during this phase: section 7.5 (numbered from 0018).
@@ -321,3 +321,5 @@ Resolutions where reviews differed or the author chose:
 - "Last time an administrator looked at the overview" (earlier draft) was dropped as personal-data tracking without purpose.
 
 Not verifiable before implementation: fine-grained Keycloak admin permissions restricting the provisioner to `mod-*` clients in 26.8; the credential-delivery options on the target Compose version (spike in B2a); two-role rotation behaviour; the Keycloak LDAP connection test with limited rights; provenance and package access on GitHub Packages for private repositories on this plan; the 1,000,000-row migration and verification timings; `cifs` volumes on the target host.
+
+Owner approval 2026-10-19. Open after approval: Q47 (path for the Lead-Radar-Plattform as pilot), before B6. PRD-0001 revision 3 (C1 to C25) follows with the first skeleton milestone.

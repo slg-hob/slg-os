@@ -22,7 +22,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 - First step: [PRD-0003](docs/prd/0003-walking-skeleton.md) (repository layout, verified versions of JDK, Spring Boot and tools, CI, milestones M1 to M6c), approved 2026-10-19. Next: M1 foundation.
 
 ## Phase 1b: Platform capabilities (PRD in progress)
-- [PRD-0004](docs/prd/0004-platform-capabilities.md) (reviewed, awaiting approval): milestones B1 to B8 (B2, B5 and B7 split into sub-milestones). Owner decisions 2026-10-19: four-eyes release is a process in the module repository (Q38); SDK and template via GitHub Packages and a template repository.
+- [PRD-0004](docs/prd/0004-platform-capabilities.md) (approved 2026-10-19): milestones B1 to B8 (B2, B5 and B7 split into sub-milestones). Owner decisions 2026-10-19: four-eyes release is a process in the module repository (Q38); SDK and template via GitHub Packages and a template repository.
 - Admin UI and permission mapping from AD groups to roles and permissions.
 - Security audit log with hash chain.
 - Immutable module store, registration pipeline and module provisioner (database schema and Keycloak client per module).
