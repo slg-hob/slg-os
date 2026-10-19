@@ -17,6 +17,7 @@ SLG Operating System: a locally hosted, web-based platform with an OS-like deskt
 
 ## Documentation map
 
+- [`ROADMAP.md`](ROADMAP.md): phases, sequence and open decisions
 - [`CLAUDE.md`](CLAUDE.md): working rules and workflows for contributors and Claude Code
 - [`docs/adr/`](docs/adr/README.md): architecture decision records
 - [`docs/prd/`](docs/prd/README.md): product requirements (always English), starting with [PRD-0001 Platform core](docs/prd/0001-platform-core.md)

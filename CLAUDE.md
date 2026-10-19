@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `slg-os` ("SLG Operating System", System Logistics) is a greenfield project in the specification phase. The repository contains documentation only (`docs/adr`, `docs/prd`, `docs/reviews`); no code or build files exist yet. **Build, lint and test commands do not exist yet.** When the project skeleton is created, add the real commands here (build, run, lint, full test run, single test, coverage) instead of guessing.
 
-Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there; start from PRD-0001), review checklists in `docs/reviews/` (use them for the independent review agents), spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`).
+Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there; start from PRD-0001), review checklists in `docs/reviews/` (use them for the independent review agents), the plan in `ROADMAP.md`, spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`).
 
 ## What slg-os is
 
@@ -30,18 +30,28 @@ Modules are added incrementally and lightly: registering a module and assigning 
 
 ## Workflows
 
-### Specification workflow
+### Working agreement: how requests are handled
+- A request for a PRD or an implementation starts the matching workflow below and runs it **to the end without asking for confirmation of intermediate steps**: drafting, review agents, integrating findings, tests, commits and pushes to the work branch. Do not ask "should I start the review?" or "shall I continue?".
+- Ask the owner only (1) for a decision that cannot be derived from PRDs, ADRs and this file and that has real consequences, **collected into one interview at the start** (non-blocking questions go into the PRD as open questions instead), and (2) at the **final gate**: one confirmation per deliverable to merge to `main` (fast-forward) and, for PRDs, to approve it. If the owner says to merge directly, merge without the extra question.
+- Finish with one short report: what was done, what the author decided where reviews differed, what needs the owner. No step-by-step narration.
+- Shortcuts: `/prd <topic>` and `/implement <PRD>` run the workflows (project skills in `.claude/skills/`).
 
-1. **PRDs are always written in English.**
-2. A PRD is drafted first (before any implementation).
-3. An **independent review agent** reviews the PRD from multiple perspectives (at least: completeness of requirements, security, UI/UX; add others as relevant, e.g. permissions, operations, data protection) and **corrects and extends** the PRD directly.
+### Git rules
+- Work on a branch `claude/<topic>`; commit messages in English; stage explicit paths, never `git add -A` where ignored build output or spike files could become untracked; never commit secrets or files over 50 MB. Spike code stays on branch `spike/shell`.
+- Push after each workflow step. If the stop hook reports unpushed commits, verify with `git ls-remote origin <branch>` and push only if the remote really lacks the commit.
+
+### Specification workflow
+1. Draft the PRD from `docs/prd/TEMPLATE.md` in English (number and file name from the index in `docs/prd/README.md`).
+2. Start independent review agents (fresh context, in parallel, they must not edit the PRD) for at least: requirements completeness and consistency, security, UI/UX and accessibility, operations and testability (add permissions or data protection where relevant). Each writes findings with severity and ready-to-paste text into the scratchpad; use `docs/reviews/spec-review-checklist.md`.
+3. Integrate the findings into the PRD, resolve conflicts between reviews and write the decision into the PRD's review log, update the indices (`docs/prd/README.md`, `ROADMAP.md`), push.
+4. Report. After the owner approves, set the status to Approved and merge.
 
 ### Implementation workflow
-
-1. Implement the requirement. **Code, identifiers, comments, commit messages are English.**
+1. Implement the requirement from an approved PRD. **Code, identifiers, comments and commit messages are English.**
 2. **UI/UX is bilingual (German / English) from the start, strictly via i18n.** No hard-coded user-visible strings, in the shell or in any module. Missing translation keys in either language are a defect.
-3. Implement tests. **Global test coverage must be >= 80%**, enforced in the build (fail the build below the threshold).
-4. An **independent review agent** reviews the implementation from multiple perspectives (requirements completeness, security, UI/UX, test coverage; add others as relevant) and **corrects and extends** it.
+3. Implement tests. **Global test coverage must be >= 80 %**, enforced in the build (fail the build below the threshold); details per PRD-0001 NFR-2.
+4. Start independent review agents (same rules as above, perspectives: requirements completeness, security, UI/UX, test coverage, operations as relevant; `docs/reviews/implementation-review-checklist.md`); integrate and correct the implementation, rerun tests, push.
+5. Report with test results; update `ROADMAP.md` and the commands section of this file when the build tooling changes.
 
 "Independent" means the reviewer is a separate agent (fresh context), not the one that wrote the artifact.
 
