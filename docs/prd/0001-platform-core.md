@@ -194,7 +194,7 @@ Shared components: Loading (skeleton after 300 ms, spinner after 1 s, timeout me
 - 8.6 Manifest validation and SSRF: JSON schema validation with size limit; server-side fetches only to an allowlist of internal module service names, http(s) only, fixed ports, no redirects, resolved IPs must not be loopback, link-local or metadata addresses, 5 s timeout. The connection is made to the validated IP (no second DNS resolution, against rebinding), and the allowlist is derived from registered module entries, not from manifest content.
 - 8.7 Keycloak and AD (service account and certificate rotation operated by the owner's team, Q20): LDAPS with certificate validation; dedicated read-only AD service account limited to the needed OUs; brute-force detection with tuned parameters; explicit refresh-token and session lifetimes; no `start-dev` mode; the built-in client scopes are defined explicitly in the committed realm file (importing a realm with custom scopes otherwise drops `profile`, `email`, `roles`, `web-origins`) and an import smoke test checks them; admin console not routed via the public proxy; realm export contains no secrets; defined patch cadence.
 - 8.8 Audit log integrity: see FR-9. Exports go to the read-only backup.
-- 8.9 Data protection (DSGVO): personal data processed by the core: user id, display name, email, AD group names (server-side session), IP address (audit), UI preferences, technical logs, and session data (session id hash, IP, user agent, encrypted tokens). Purpose: authentication, authorization, security accountability, operation. Legal basis proposal: Art. 6(1)(f) DSGVO and § 26 BDSG; a works council agreement is required before go-live because login and audit data could enable behaviour or performance monitoring (BetrVG § 87(1) Nr. 6); the audit log is not used for performance evaluation. Retention (owner decision; the owner stated on 2026-10-19 that no restriction applies, the position is a statement of intent, not a clearance; the formal DPO and works-council agreement stays a go-live item under Q23, which this document does not assert as given; Keycloak's own event store, kept 7 days, is personal data too): preferences are removed 90 days after the user disappears by the daily job of PRD-0004 PF-14 AC2; audit log 6 months, application logs 30 days, session data until logout or the absolute timeout plus 24 hours, preferences 90 days after the account disappears from AD. Audit log access for platform administrators (no auditor role in phase 1, Q14), the access itself audited. Logs contain pseudonymous ids, never names, emails or content. An Art. 30 record is created and the DPO decides on a DPIA before go-live. The core can export and delete a user's preferences and look up audit entries on request.
+- 8.9 Data protection (DSGVO): personal data processed by the core: user id, display name, email, AD group names (server-side session), IP address (audit), UI preferences, technical logs, and session data (session id hash, IP, user agent, encrypted tokens). Purpose: authentication, authorization, security accountability, operation. Legal basis proposal: Art. 6(1)(f) DSGVO and § 26 BDSG; co-determination under BetrVG § 87(1) Nr. 6 can apply to login and audit data that could enable behaviour or performance monitoring; the owner decided on 2026-10-19 (Q23) not to make a formal works-council or DPO step a requirement of this document and carries that assessment outside it (the employer's legal duties exist independently of this document); the audit log is not used for performance evaluation. Retention (owner decision; the owner stated on 2026-10-19 that no restriction applies, this document does not assert that any clearance has been given; Keycloak's own event store, kept 7 days, is personal data too): preferences are removed 90 days after the user disappears by the daily job of PRD-0004 PF-14 AC2; audit log 6 months, application logs 30 days, session data until logout or the absolute timeout plus 24 hours, preferences 90 days after the account disappears from AD. Audit log access for platform administrators (no auditor role in phase 1, Q14), the access itself audited. Logs contain pseudonymous ids, never names, emails or content. The input for the Art. 30 record is generated from the code (PRD-0004 PF-14 AC3); a DPIA decision is outside this document (Q23). The core can export and delete a user's preferences and look up audit entries on request.
 - 8.10 Secrets: files under `/run/secrets/` (mode 0400; static ones as Compose secrets, per-module credentials from the provisioner, section 7), never logged, no secrets in images, repositories or realm export, per-module DB credentials.
 
 ## 9. Testing strategy
@@ -215,13 +215,13 @@ Shared components: Loading (skeleton after 300 ms, spinner after 1 s, timeout me
 - Failure modes: AD down: existing sessions work, new logins fail with a localized error and an alert. Keycloak down: the gateway keeps valid module tokens until they expire (<= 5 min), then answers 401 `AUTH_UNAVAILABLE`; sessions are kept. PostgreSQL down: 503 `SESSION_STORE_DOWN` (FR-11 AC8). Core restart: sessions persist, in-flight requests fail and the SDK retries once. Module down: window error boundary (FR-8) and 503 `MODULE_DOWN`. Module backends refetch the JWKS on an unknown key id.
 - Phase 1a (walking skeleton, PRD-0003): proxy with two host names, production-mode Keycloak with LDAP, core with BFF and PostgreSQL sessions, minimal registry with content-addressed store and import map, audit table, shell with two windows, idle warning and session-expiry flow, reference module with minimal SDK, CI with coverage gates, E2E in Chromium and Firefox (WebKit informative), backup script.
 - Phase 1b (PRD-0004, with the visual language PRD-0005 alongside): admin UI and permission management, audit chain and event ingestion, provisioner, store completion and staged activation, full SDK, contract test kit and module template, alerts, backup completion, privacy tooling.
-- Phase 1c (go-live gates): restore rehearsal on a clean host, Firefox and Edge checks (Q25a), load test, manual screen-reader pass, Q23 and Q25a closed.
+- Phase 1c (go-live gates): restore rehearsal on a clean host, Firefox and Edge checks (Q25a), load test, manual screen-reader pass, Q25a closed.
 
 ## 11. Decisions and open questions
 Owner is Benjamin Honauer unless stated. Decisions were taken in the owner interview on 2026-10-19.
 
 ### 11.1 Decisions
-Decided in the owner interviews of 2026-10-19, ordered by number (Q23 and Q25a are in 11.2).
+Decided in the owner interviews of 2026-10-19, ordered by number (Q25a is in 11.2).
 | # | Decision | Effect in this PRD |
 |---|---|---|
 | Q1 | No Kerberos/SPNEGO SSO for now; Keycloak login form against AD. Can be enabled later without architecture change. | 8.1, ADR-0001 stays valid |
@@ -245,36 +245,39 @@ Decided in the owner interviews of 2026-10-19, ordered by number (Q23 and Q25a a
 | Q20 | The owner's team operates the read-only AD service account and LDAPS certificate rotation. | 8.7 |
 | Q21 | iframe exceptions need a meaningful title, focus hand-off and theme/language signals where possible, and require an ADR. | UI-21 |
 | Q22 | WCAG 2.2 AA is sufficient; no stricter legal or works-council requirement known. | NFR-4 |
+| Q23, Q42 | **Decided 2026-10-19:** no formal DPO or works-council gate is required by this document; the owner carries the assessment outside it. Login-event ingestion may run in shared environments. | 8.9 |
 | Q24 | **Decided 2026-10-19:** the owner accepts the remaining risk after the backend-for-frontend (8.3). | 8.3 |
 | Q25b | **Decided 2026-10-19:** the owner and the platform team run the manual gates (screen readers, Edge, measurements). | Section 9 |
 | Q26 | Decided by the skeleton experiment (PRD-0003 SK-19, ADR-0016): the rule is token exchange v2 if it works for the confidential client, else refresh-token down-scoping. | FR-11 AC3 |
-| Q27 | Development and CI use test host names (`*.slg.test`) and a per-run CA; production names and AD-CA certificates are set before go-live. | 8.5, NFR-9 |
+| Q27 | Development and CI use test host names (`*.slg.test`) and a per-run CA; production uses the same base domain for both origins (for example `os.<company domain>` and `sso.<company domain>`) with AD-CA certificates; the IT sets the names. | 8.5, NFR-9 |
 | Q28 | PostgreSQL session store, confirmed by ADR-0015 (PRD-0003 D4) at the skeleton. | FR-11 AC8 |
 | Q29 | Idle-timeout warning 2 minutes before the idle timeout: yes (UI-13). | UI-13 |
 | Q30 | **Decided 2026-10-19:** no e-mail alerts; alerts stay in the admin overview, the tray indicator and the logs, so operators must watch the overview (NFR-8). | NFR-8 |
 | Q31 | The owner can provide a test OU with test accounts and a read-only bind account for a real-AD smoke test (external gate, not blocking). | Section 9 |
+| Q35 | Module background jobs run with the module's own service account and the module's own permissions, without user context; user-bound actions need a session. | FR-5 AC4 |
 | Q36 | Safari is not required; WebKit in CI is informative. | UI-29, section 9 |
 | Q38 | Four-eyes release of module versions is a process in the module repository; the tool records the review reference and enforces nothing. | 8.3 |
-| Q40 | The Lead-Radar-Plattform is the pilot module; its non-Spring backend is Q47. | Section 10 |
+| Q40 | The Lead-Radar-Plattform is the pilot module (frontend only, Q47). | Section 10 |
 | Q41 | The Keycloak federation exposes one OU or name filter of AD groups. | FR-5 |
-| Q42 | The owner states that no restriction applies; the formal sign-off stays under Q23. | 8.9 |
 | Q43 | The GitHub organisation has a Team or Enterprise plan; settings are verified in PRD-0004 B6. | Section 10 |
 | Q45 | No external anchor for the audit chain head. | FR-9 |
 | Q46 | Fallback for the credential-delivery spike: operator-written secret files. | Section 7 |
+| Q47 | The Lead-Radar-Plattform joins as pilot with its **frontend only**; its Node backend stays a separate service behind the gateway (thin Spring facade or an ADR exception for this one service: Q59). | Section 10 |
 | Q48 to Q52, Q55 to Q58 | Visual language decisions (PRD-0005 section 11): product mark designed in the project, Source Sans 3, pill-shaped single-line controls, built-in wallpapers, no office reference PC, the owner as design reviewer, no works-council step for the usability study. | UI-21 |
+| Q50 | The usability test uses Sales and Technology/Service; recruiting and moderation are Q60. | UI-21 |
+| Q53 | The Design System artifact of the maintenance planner lapses; the repository is the single source. | UI-21 |
+| Q54 | Later widgets: clock and calendar, module shortcuts and recently used items (a later PRD). | UI-21 |
+| Q57 | The primary button gets no extra outline on white (forced colors only). | UI-21 |
 
 Resolved by the spike: Q5 (Module Federation with Vite is viable in Chromium, ADR-0010 proposed) and Q19 (History API deep links work).
 
 ### 11.2 Still open
 | # | Question | Owner | Needed by |
 |---|---|---|---|
-| Q23 | Works council agreement and DPO decision (Art. 30 record, DPIA) covering 8.9. The owner's position (no restriction) is recorded; the formal sign-off is kept as a go-live item | Benjamin Honauer | before go-live |
 | Q25a | Firefox check of import-map integrity and CSP (Safari not required) | platform team | before go-live |
-| Q47 | Path for the Lead-Radar-Plattform (non-Spring backend) against the module contract | Benjamin Honauer | before PRD-0004 B6 |
-| Q50 | Departments, recruiting and moderation of the usability test | Benjamin Honauer | before PRD-0005 V3 |
-| Q53, Q54, Q57 | Design-system artifact, further widgets, primary button outline (PRD-0005) | Benjamin Honauer | see PRD-0005 |
-| Q32 (production part) | Production host names and AD-CA certificates for both origins | Benjamin Honauer | before go-live |
-| Q33 to Q35, Q37, Q39 | Technical questions of the skeleton and phase 1b | platform team | see PRD-0003, PRD-0004 |
+| Q59 | Lead-Radar backend behind the gateway: a thin Spring facade that validates tokens and permissions, or an ADR exception for this one Node service with a documented validation contract | platform team | start of PRD-0004 B6 |
+| Q60 | Who recruits and moderates the usability test (departments: Sales and Technology/Service) | Benjamin Honauer | before PRD-0005 V3 |
+| Q33, Q34, Q37, Q39 | Technical questions of the skeleton and phase 1b | platform team | see PRD-0003, PRD-0004 |
 
 ## 12. Review log
 Four independent review agents (fresh context, no authorship of this PRD) reviewed it on 2026-10-19. Each wrote findings and proposed text; the author integrated them, since concurrent edits to one file would conflict.
@@ -328,3 +331,5 @@ Revision 3 (2026-10-19): an editorial and consequential revision, no change of g
 Not verifiable before implementation: whether the 200 interstitial keeps the `SameSite=Strict` cookie in the supported browsers (PRD-0003 M2), the Keycloak and credential-delivery items listed in PRD-0004, and the real performance of glass on weaker office PCs.
 
 Revision 3 review: three independent agents (requirements and consistency; security and data protection; UI/UX with operations) reviewed the diff. They found stale Safari and office-PC statements (8.3, section 9, phase 1c), remaining "Docker secret" and "taskbar" wording, a contradicting NFR-8 sentence, the provisioner described as part of the core, the `Lax` fallback consequences, SSE and `Origin`, the permission API scope, the four-eyes residual risk and the revocation arithmetic (about 16 minutes against the 15 of Q7). All were applied above; the 16-minute figure is stated openly instead of changing the LDAP sync interval of PRD-0003 SK-15. The open question Q36 in PRD-0003 section 11 (a Mac for Safari checks) is closed by this revision (Safari is not required).
+
+Owner interview 2026-10-19 (after the revision 3 review): Q23/Q42 no formal DPO or works-council gate required by this document (owner's responsibility); Q27 same base domain for production; Q35 module service accounts for background jobs; Q47 frontend-only pilot (backend path Q59); Q50 Sales and Technology/Service; Q53 artifact lapses; Q54 clock/calendar and shortcuts later; Q57 no outline.

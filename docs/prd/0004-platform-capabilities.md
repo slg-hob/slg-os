@@ -1,6 +1,6 @@
 # PRD-0004: Platform capabilities (phase 1b)
 
-- Status: **Approved** by the owner on 2026-10-19 (independently reviewed by requirements, security, UI/UX and operations agents); Q47 stays open
+- Status: **Approved** by the owner on 2026-10-19 (independently reviewed by requirements, security, UI/UX and operations agents); Q47 decided later the same day (frontend-only pilot)
 - Owner: Benjamin Honauer
 - Date: 2026-10-19
 - Related ADRs: 0001, 0002, 0004 to 0009, 0010 and 0011 (proposed, decided by the skeleton evidence), 0012; ADR-0013 to 0016 and 0017 (written by the skeleton, PRD-0003 section 7.5). New ADRs written during this phase: section 7.5 (numbered from 0018).
@@ -55,7 +55,7 @@ Implements FR-9 (failed login, break-glass), 8.7.
 - AC2: What is written. `LOGIN` and `LOGOUT` stay written by the core (PRD-0003 SK-9); ingestion writes `LOGIN_ERROR`, master-realm logins and `break_glass_use`. A Keycloak `LOGIN` without a matching core entry within 60 s is a discrepancy: a log line and the alert kind `login-audit-gap`. "Exactly one entry per source event" applies per event type, tested with a replayed and an overlapping poll including equal timestamps.
 - AC3: Data minimisation: the realm file turns off storing the typed username in event details (`includeRepresentation` and detail filters) and the free-text username is never copied. Failed-login rows hold the user id only if Keycloak resolved one (else `unknown`), a reason code, and the IP truncated to /24 (IPv4) or /64 (IPv6); `break_glass_use` keeps the full IP. Test: a failed login with a password-like username leaves it nowhere in the core database, logs, backups, **or Keycloak's own event store and admin console**.
 - AC4: A master-realm login that is not the documented break-glass account, and any use of the break-glass account, raises an alert and an audit event.
-- AC5: Latency up to two poll intervals (60 s) is documented. Ingestion is a configuration switch. The owner stated on 2026-10-19 that no data-protection or works-council restriction applies to what the platform needs, so it may be enabled in shared environments; the formal DPO and works-council sign-off remains a go-live item under PRD-0001 Q23 (this PRD does not assert it has been given).
+- AC5: Latency up to two poll intervals (60 s) is documented. Ingestion is a configuration switch. The owner stated on 2026-10-19 that no data-protection or works-council restriction applies to what the platform needs, so it may be enabled in shared environments; the owner decided that no formal DPO or works-council gate is required (PRD-0001 Q23); this PRD does not assert that any clearance exists.
 
 #### PF-3 Audit retention, read access and export
 Implements 8.9, FR-9 (reads audited), Q6, Q14.
@@ -237,7 +237,7 @@ Versions are those of ADR-0013 (PRD-0003 section 7.4). New tools (artefact signi
 - Supply chain: SDK and template artefacts follow PF-8 AC4 (protected release environment, provenance or recorded alternative, consumer verification); template sync uses a single-repository deploy key; module images are signed and referenced by digest.
 - Alerts and logs: closed-enumeration subjects, no secrets, tokens, IPs or user names.
 - Backups: `age` private key offline; signed status record; `cifs` options visible to docker-group members (documented).
-- Data protection: new personal data are audit rows (pseudonymous ids, IPs), the privacy tooling and Keycloak's own event store. Retention: audit 6 months (whole months), Keycloak events 7 days, preferences 90 days after the user disappears, sessions as in the skeleton. DPO input on login-event ingestion, the audit viewer and export, and the privacy tooling is requested before ingestion is enabled anywhere shared (Q42, Q23).
+- Data protection: new personal data are audit rows (pseudonymous ids, IPs), the privacy tooling and Keycloak's own event store. Retention: audit 6 months (whole months), Keycloak events 7 days, preferences 90 days after the user disappears, sessions as in the skeleton. Per the owner decision of 2026-10-19 (Q23, Q42) no formal DPO or works-council step is required by this document; the assessment lies with the owner.
 
 ## 9. Testing strategy
 - Backend: JUnit/AssertJ/Mockito with Testcontainers (PostgreSQL with partitions and roles, Keycloak with the committed realm, events and fine-grained permissions, LDAP stub); concurrency tests for the chain (threads and two containers); property-style tests for the canonical encoding; archive fuzz corpus; ArchUnit rules (the provisioning client is the only caller of the provisioner API; one shared CSV writer; no admin controller bypasses the permission annotation, plus the reflective endpoint enumeration of PF-6 AC6).
@@ -247,7 +247,7 @@ Versions are those of ADR-0013 (PRD-0003 section 7.4). New tools (artefact signi
 - CI budget: the PR gate stays at or below 25 minutes (Chromium only, one axe mode per page in light and dark, 100,000-row tests); the nightly workflow runs Firefox and WebKit, forced-colors and narrow axe modes, the 1,000,000-row migration and verification, the restore test, template drift, mutation checks and the performance measurements. Nightly failures open an issue and block release tags, not pull requests. `gate` names its required jobs.
 - Time-dependent behaviour (alerts, rotation, retention, polls) uses an injectable clock. Mutation check on `audit`, `provisioning`, `store`, `security` in each milestone review.
 - Coverage: gates as in NFR-P1; tests assert behaviour including failure paths; every fixed defect gets a regression test.
-- Manual and external: effort measurement (PF-10 AC5), DPO review (Q23, Q42), the SMB target against the real share (Q9), real-AD group listing (Q41).
+- Manual and external: effort measurement (PF-10 AC5), DPO review only if the owner requests it (Q23), the SMB target against the real share (Q9), real-AD group listing (Q41).
 
 ## 10. Rollout and operations
 - Milestones, each its own pull request (or several) through the implementation workflow. Migration versions are allocated in blocks per milestone.
@@ -272,14 +272,15 @@ Versions are those of ADR-0013 (PRD-0003 section 7.4). New tools (artefact signi
 | Q39 | Credential delivery from the provisioner to module containers without a Docker socket: (a) a volume written only by the provisioner container and mounted read-only per module with `subpath`; (b) an operator CLI that fetches credentials from the provisioner and writes host secret files; (c) one-time retrieval by the module at start with a bootstrap token. Criteria: the core never mounts all modules' secrets, works with Docker Compose on the target host (ADR-0009), restart-safe, rotation without recreating the compose project (PF-4 AC5). Decided in ADR-0018 by a spike in B2a; if all fail, fall back to (b) (Q46, decided) | platform team | start of B2a |
 | Q40 | Pilot module | Benjamin Honauer | **Decided 2026-10-19:** the Lead-Radar-Plattform (`slg-hob/lead-radar-plattform`). Consequence: see Q47 |
 | Q41 | Scope of AD groups exposed by the Keycloak federation | Benjamin Honauer | **Decided 2026-10-19:** a single OU or name filter; the OU or prefix is named at the start of B3 (platform team with the AD owner) |
-| Q42 | DPO and works-council view on login-event ingestion, audit viewer and export, privacy tooling | Benjamin Honauer | **Owner position 2026-10-19:** no restriction, everything the platform needs is allowed; ingestion may run in shared environments. The formal sign-off stays a go-live item under Q23 |
+| Q42 | DPO and works-council view on login-event ingestion, audit viewer and export, privacy tooling | Benjamin Honauer | **Decided 2026-10-19:** no formal gate required (PRD-0001 Q23); ingestion may run in shared environments |
 | Q43 | GitHub organisation settings | Benjamin Honauer | **Answered 2026-10-19:** the organisation has a Team or Enterprise plan. B6 still verifies package visibility, repository access grants, provenance for private repositories, the CI token type and the sync deploy key |
 | Q44 | Alert e-mail via SMTP relay | Benjamin Honauer | **Decided 2026-10-19:** no e-mail alerts; the overview and logs suffice (Q30 closed for v1; operators must watch the overview) |
 | Q45 | External anchor for the audit chain head | Benjamin Honauer | **Decided 2026-10-19:** no; the signed backup status record and the target's history suffice |
 | Q46 | Fallback if the credential-delivery spike fails | Benjamin Honauer | **Decided 2026-10-19:** the operator writes secret files on the host from a one-time retrieval (option b) |
-| Q47 | The Lead-Radar-Plattform is a standalone Node.js/Fastify/React application with its own PostgreSQL, without login, while the module contract (PRD-0001 FR-6) supports Spring backends and React frontends only. As pilot it needs either a backend rewrite on the Spring SDK, or an ADR-backed exception for non-Spring backends (token validation by a documented library contract, own health/permission endpoints), or a role as consumer of the core only. Which path, and is the pilot scope its frontend only? | Benjamin Honauer | before B6 |
-| Q35 | Permissions for module background work for a user without a live session (from PRD-0003); decided here only if the pilot module needs it | platform team | before B7c or the first module with jobs |
-| Q23, Q25a, Q33, Q34, Q37 | Unchanged, tracked in PRD-0001 and PRD-0003 | see there | see there |
+| Q47 | Lead-Radar-Plattform as pilot | Benjamin Honauer | **Decided 2026-10-19:** frontend only; the Node backend stays a separate service behind the gateway; thin Spring facade or an ADR exception for this one service is Q59 (platform team, start of B6) |
+| Q35 | Background work without a user session | platform team | **Decided 2026-10-19:** module service account with the module's own permissions, no user context (PRD-0001 Q35) |
+| Q25a, Q33, Q34, Q37, Q59 | Tracked in PRD-0001 and PRD-0003 | see there | see there |
+| Q23 | No formal DPO or works-council gate (owner decision 2026-10-19, PRD-0001) | Benjamin Honauer | closed |
 | Q24, Q25b, Q31, Q32, Q36 | **Decided 2026-10-19** (see the decision list below) | Benjamin Honauer | closed |
 
 Decisions of the owner interview on 2026-10-19 that belong to earlier PRDs (carried into PRD-0001 revision 3): Q24 the remaining risk after the backend-for-frontend is accepted; Q25b the owner and the platform team run the manual gates (screen readers, Edge, measurements); Q31 a test OU with test accounts and a read-only bind account can be provided; Q32 development and test run on CI and local machines with test host names (`*.slg.test`), real names and AD-CA certificates come before go-live; Q36 Safari is not required, so the supported browsers are Edge, Chrome and Firefox and WebKit in CI is informative only (PRD-0001 UI-29 and Q25a change accordingly, C25).
