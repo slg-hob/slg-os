@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-`slg-os` ("SLG Operating System", System Logistics) is a greenfield project. The repository currently contains only a README; no code, build files or PRDs exist yet. **Build, lint and test commands do not exist yet.** When the project skeleton is created, add the real commands here (build, run, lint, full test run, single test, coverage) instead of guessing.
+`slg-os` ("SLG Operating System", System Logistics) is a greenfield project in the specification phase. The repository contains documentation only (`docs/adr`, `docs/prd`, `docs/reviews`); no code or build files exist yet. **Build, lint and test commands do not exist yet.** When the project skeleton is created, add the real commands here (build, run, lint, full test run, single test, coverage) instead of guessing.
+
+Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there; start from PRD-0001), review checklists in `docs/reviews/` (use them for the independent review agents).
 
 ## What slg-os is
 
@@ -19,10 +21,12 @@ Modules are added incrementally and lightly: registering a module and assigning 
 
 ## Tech stack (fixed)
 
-- Backend: latest Java LTS/release with Spring (Boot, Security, Data, ...) plus further frameworks as needed
-- Frontend: React with Vite and Bootstrap
+- Backend: latest Java with Spring (Boot, Security, Data, ...) plus further frameworks as needed; built with Maven (ADR-0004)
+- Frontend: React with Vite and Bootstrap; module frontends via Module Federation (ADR-0005)
 - Database: PostgreSQL
-- Deployment: Docker (everything must run containerized; on-prem, no cloud dependencies)
+- Identity: Keycloak federating the Active Directory, OIDC (ADR-0001)
+- Deployment: Docker, single server with Docker Compose, fewer than 100 users (ADR-0009); on-prem, no cloud dependencies
+- Layout: monorepo for the core (ADR-0004)
 
 ## Workflows
 
@@ -43,7 +47,7 @@ Modules are added incrementally and lightly: registering a module and assigning 
 
 ## Platform requirements and architectural principles
 
-These are the intended guardrails for the framework. Refine them in PRDs; do not silently deviate.
+These are the intended guardrails for the framework. Refine them in PRDs and ADRs; do not silently deviate. Decisions already taken are in `docs/adr/`.
 
 **Module contract**
 - One mandatory way to build and integrate a module (manifest/descriptor, lifecycle, extension points). Modules are developed in their own GitHub repos and consumed by slg-os; no module-specific code in the core.
@@ -52,9 +56,9 @@ These are the intended guardrails for the framework. Refine them in PRDs; do not
 - Provide a module template/SDK so new modules start compliant (auth, layout, i18n, permissions, logging wired in).
 
 **Authentication and authorization**
-- Authentication via the local Active Directory (LDAP/Kerberos); decide and document in a PRD whether an IdP such as Keycloak sits in between.
-- Authorization derives from AD groups. Modules never talk to AD directly and never implement their own auth; they consume the framework's identity and permission API.
-- Modules declare permissions; the core maps AD groups to those permissions (admin-managed, not hard-coded). Deny by default.
+- Authentication via the local Active Directory through Keycloak (ADR-0001). Modules validate OIDC tokens; they never talk to AD or Keycloak for login.
+- Authorization derives from AD groups. Modules never implement their own auth; they consume the SDK's identity and permission API.
+- Modules declare permissions in their manifest; admins map AD groups to roles/permissions in the slg-os admin UI (ADR-0006). Deny by default.
 - Enforce permissions on the backend for every request; frontend hiding is only UX.
 - Module-to-module and module-to-core calls are authenticated and authorized as well.
 
@@ -66,7 +70,7 @@ These are the intended guardrails for the framework. Refine them in PRDs; do not
 - PostgreSQL is the only database. Schema changes via versioned migrations (e.g. Flyway/Liquibase). Each module owns its schema/namespace and must not read another module's tables; cross-module data goes through defined APIs/events.
 
 **Cross-cutting capabilities provided by the core (do not reimplement in modules)**
-- audit logging (who did what, when), structured logging, correlation IDs
+- security audit log (logins, permission mapping changes, module registration, admin actions only; business-action logging is the module's own concern, ADR-0008), structured logging, correlation IDs
 - configuration and secrets handling (no secrets in code or images)
 - notifications, background jobs/scheduling for automations
 - file/attachment handling policies
@@ -80,11 +84,12 @@ These are the intended guardrails for the framework. Refine them in PRDs; do not
 
 **Security baseline**
 - Follow OWASP ASVS-style practices: input validation, output encoding, CSRF/XSS protection, secure headers/CSP, least privilege, dependency scanning.
-- Treat third-party module code as untrusted relative to core data: validate manifests, restrict what a module can access.
+- Modules come only from internal, reviewed teams (ADR-0007), so isolation targets faults rather than malicious code. Still validate manifests, give each module its own schema/credentials, and authenticate every call. Use `docs/reviews/module-registration-checklist.md` when registering.
 
-## Open decisions (resolve in PRDs before implementing)
+## UI model
 
-- IdP (Keycloak/Authentik) vs. direct AD integration; Kerberos SSO required or not
-- Module integration model: build-time dependency, runtime-loaded plugin, or separately deployed services embedded in the shell (e.g. micro-frontends/iframes behind a reverse proxy)
-- Window-based desktop UI vs. tile launcher with desktop theme
-- Repository layout (monorepo for core vs. separate backend/frontend), build tool (Maven/Gradle), test frameworks
+Window-based desktop shell (ADR-0003): modules render in shell-managed, resizable windows and must not assume the full viewport. The shell owns theme, language and window state.
+
+## Open decisions (resolve in PRD-0001 review before implementing)
+
+See "Open questions" in `docs/prd/0001-platform-core.md`: Kerberos SSO required or not, Java/Spring baseline versions, test frameworks and coverage tooling, window manager library vs. in-house, Vite Module Federation plugin maturity (spike), audit log retention, token lifetime, accessibility target, secret management/backup targets, module artifact publishing.
