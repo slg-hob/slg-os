@@ -25,7 +25,7 @@ Modules are added incrementally and lightly: registering a module and assigning 
 - Frontend: React with Vite and Bootstrap; module frontends via Module Federation (ADR-0005)
 - Database: PostgreSQL
 - Identity: Keycloak federating the Active Directory, OIDC (ADR-0001)
-- Deployment: Docker, single server with Docker Compose, fewer than 100 users (ADR-0009); on-prem, no cloud dependencies
+- Deployment: Docker, single server with Docker Compose, fewer than 100 users (ADR-0009); on-prem hosting without cloud runtime dependencies (outbound pull of module images from ghcr.io is allowed, PRD-0001 Q10/Q18)
 - Layout: monorepo for the core (ADR-0004)
 
 ## Workflows
@@ -92,4 +92,4 @@ Window-based desktop shell (ADR-0003): modules render in shell-managed, resizabl
 
 ## Open decisions (resolve in PRD-0001 review before implementing)
 
-PRD-0001 is reviewed and awaits owner approval. Its section 11 lists the open questions with a "needed by" milestone (Kerberos SSO, Java/Spring versions, window manager, Module Federation plugin spike, token storage, audit retention, ADR-0008 clarification, ...). Version numbers and tools named in the PRD are proposals until verified in the spike; do not treat them as decided.
+PRD-0001 is reviewed and awaits owner approval. Section 11 records the owner's decisions (e.g. no Kerberos SSO, tokens in memory only, only the current contract major supported, admin-only module registration, ghcr.io for module images, 6-month audit retention) and the few open items (Module Federation plugin spike, works council/DPO sign-off). Version numbers and tools named in the PRD (JDK, Spring Boot, test tools) are proposals until verified when the project skeleton is created; do not treat them as decided.

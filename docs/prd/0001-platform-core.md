@@ -1,6 +1,6 @@
 # PRD-0001: Platform core: shell, authentication, authorization, module contract
 
-- Status: Reviewed (four independent reviews integrated, awaiting owner approval)
+- Status: Reviewed (four independent reviews integrated; owner decisions of 2026-10-19 recorded in section 11; awaiting owner approval)
 - Owner: Benjamin Honauer
 - Date: 2026-10-19
 - Related ADRs: 0001-0009
@@ -27,7 +27,7 @@ Goals:
 - End user: signs in, opens permitted modules, sets language/theme.
 - Module developer (internal team): builds a module from the template and the SDK.
 - Platform administrator (`platform-admin`): registers modules, maps AD groups to roles/permissions, revokes sessions. Seeded through a configured AD group (FR-5a).
-- Auditor: read-only access to the security audit log. Whether this role is needed in phase 1 is open (Q14).
+- Auditor: read-only access to the security audit log. Not part of phase 1 (Q14); platform administrators read the log and each read is audited.
 
 ## 4. Functional requirements
 Each requirement is testable; "AC" are acceptance criteria.
@@ -48,7 +48,7 @@ German/English and light/dark switchable per user; all shell texts come from i18
 - AC2: A missing translation key in either language fails CI (UI-26).
 
 ### FR-4 Module registry
-Administrators register a module by submitting its manifest through the admin UI or admin API (same validation). Registration is an admin action; modules do not self-register (see Q16).
+Administrators register a module by submitting its manifest through the admin UI or admin API (same validation). Registration is an admin-only action; modules do not self-register (Q16).
 - Manifest fields: `id` (unique, immutable, `[a-z][a-z0-9-]{2,31}`), `name`, `version` (SemVer), `contractVersion` (range), `icon`, i18n resource paths for de and en, `entryPoints` (federated remote URL, API base path, health URL; each with `instanceMode` `singleton|multiInstance`, `minWindowSize`, `minViewport`, `category`), `permissions[]` (names `<moduleId>.<resource>.<action>` with de/en labels), optional `suggestedRoles[]`, `requires` (React major, design-system range, per ADR-0005), `closeGuard` support, and the SHA-384 integrity hash of the remote entry (8.3).
 - AC1: A manifest with a missing or unknown field, duplicate id, incomplete language, invalid permission name, unsupported contract version, or oversize payload (> 256 KB) is rejected; the response lists every violation with field path and message (de/en).
 - AC2: Registering a higher `version` of an existing id is an upgrade; the previous manifest is kept and one admin action rolls back to it.
@@ -66,7 +66,7 @@ Administrators register a module by submitting its manifest through the admin UI
 - AC1: A user with no mapped group gets 403 from every module API.
 - AC2: A removed mapping applies to tokens issued afterwards and to existing tokens within the access-token lifetime (5 min); refresh uses the current mapping. A "revoke sessions" action (user or all) is available and audited.
 - AC3: The backend SDK enforces permissions by annotation and filter; an integration test proves 403 without the permission regardless of UI state. The frontend SDK offers an equivalent check for hiding UI only.
-- AC4: Where permissions are resolved (token claim vs. core API) and the token size limit are decided in Q12; the SDK hides this from modules.
+- AC4: Tokens carry identity and AD groups only. The SDK resolves effective permissions through the core API with a short cache (<= 60 s, bounded by the 15-minute rule of Q7); modules never see this mechanism (Q12).
 
 ### FR-5a First-admin bootstrap
 - `SLG_BOOTSTRAP_ADMIN_GROUP` names an AD group. It seeds the `platform-admin` mapping when the database holds no admin mapping; afterwards admin rights come from stored mappings.
@@ -79,7 +79,7 @@ Administrators register a module by submitting its manifest through the admin UI
 Backend library (Spring) and frontend package. Only Spring and React modules are supported by the contract.
 - Backend: token validation (issuer, per-module audience, signature, expiry, `azp`), permission checks, identity access, service-account client for module-to-module calls, logging with correlation ID, health endpoints.
 - Frontend: identity (`getAccessToken()` only, never refresh tokens), permission hook, `useTranslation`, locale formatters, theme and language hooks, state components (Loading, Empty, Error, Forbidden, NotFound, Offline, SessionExpired), close guard, live-region announce API, window integration.
-- AC1: The SDK version is tied to the contract version; a module built against contract N-1 still works on a platform supporting N (see 10).
+- AC1: The SDK version is tied to the contract version. Only the current contract major is supported (Q13): registration rejects manifests for any other major, and a platform upgrade that raises the major is rolled out together with updated modules (see 10).
 
 ### FR-7 Module template
 A template repository produces a compliant module that builds, tests (80 % gate), containerizes, validates its manifest, and can be registered by an administrator via FR-4.
@@ -91,10 +91,9 @@ A template repository produces a compliant module that builds, tests (80 % gate)
 - AC3: The registry and admin UI remain usable while any module is down.
 
 ### FR-9 Security audit log
-Events: login, failed login (ingested from Keycloak events), logout, session revoke, mapping change, admin-role change, module register/upgrade/rollback/disable/enable/delete, bootstrap use, break-glass use, service-account authentication failures, repeated 403s (counted, not each logged). Fields: timestamp, event type, actor id, source IP, object, outcome, correlation ID. No request bodies or business data.
+Events: login, failed login (ingested from Keycloak events), logout, session revoke, mapping change, admin-role change, module register/upgrade/rollback/disable/enable/delete, bootstrap use, break-glass use, reads of the audit log. Service-account events and repeated 403s are not audited by the core (Q17, ADR-0008 unchanged). Fields: timestamp, event type, actor id, source IP, object, outcome, correlation ID. No request bodies or business data.
 - AC1: Each event produces exactly one entry, verified by integration test.
 - AC2: UPDATE/DELETE on the table by the application DB role fails; a daily hash-chain verification detects a modified row.
-- Note: this list interprets ADR-0008 slightly more broadly (service accounts, repeated 403s); see Q17.
 
 ### FR-10 Health and diagnostics
 Platform and per-module health/readiness; administrators get an operational overview.
@@ -105,11 +104,11 @@ Platform and per-module health/readiness; administrators get an operational over
 - NFR-2 Quality: every Maven module enforces JaCoCo line coverage >= 80 % and every frontend package enforces Vitest (v8) line coverage >= 80 %. The gate is per language and per repository; there is no cross-language average, which satisfies and tightens the project rule "global >= 80 %". CI also fails if coverage drops by more than 2 points against main. Exclusions only via a reviewed list in the build. Module repositories inherit the gate from the template.
 - NFR-3 i18n: no hard-coded user-visible strings; CI enforces key parity de/en and placeholder consistency; pseudo-locale visual tests.
 - NFR-4 Accessibility: WCAG 2.2 Level AA for shell and modules (EN 301 549 aligned), automated axe checks in E2E tests plus a manual screen-reader pass per UI-20.
-- NFR-5 Operations: single-host Docker Compose; configuration via environment and Docker secrets; documented, tested upgrade, rollback, backup and restore. Backup: nightly `pg_dump` per database (platform, Keycloak, each module schema) plus realm export and compose/secret inventory, 14 daily and 8 weekly copies on a target outside the host. RPO <= 24 h, RTO <= 4 h. A restore onto a clean host is rehearsed before go-live and at least twice a year.
+- NFR-5 Operations: single-host Docker Compose; configuration via environment and Docker secrets; documented, tested upgrade, rollback, backup and restore. Backup: nightly `pg_dump` per database (platform, Keycloak, each module schema) plus realm export and compose/secret inventory, encrypted (age), 14 daily and 8 weekly copies on an SMB share outside the host. The SMB target (host, share, credentials) is configuration, not code (Q9, Q18). RPO <= 24 h, RTO <= 4 h. A restore onto a clean host is rehearsed before go-live and at least twice a year.
 - NFR-6 Performance (p95, 20 concurrent users, warm cache, LAN): shell first load <= 2 s; sign-in to usable desktop <= 3 s; module window open <= 1.5 s warm / 3 s cold; core API read <= 200 ms, write <= 500 ms; SDK permission check <= 5 ms (local); window drag 60 fps with 5 windows; core cold start to ready <= 60 s.
-- NFR-7 Resource budget (proposed host 8 vCPU / 16 GB / SSD): Keycloak 1.5 GB, PostgreSQL 1 GB, core backend 512 MB, proxy + shell 128 MB, each module backend <= 512 MB (`mem_limit`, 1 CPU). About 10 modules fit with 30 % headroom; exceeding it requires an ADR on host sizing. The template ships these limits.
+- NFR-7 Resource budget (host: 8 vCPU / 32 GB RAM / 500 GB disk, Q18): Keycloak 1.5 GB, PostgreSQL 1 GB, core backend 512 MB, proxy + shell 128 MB, each module backend <= 512 MB (`mem_limit`, 1 CPU). With 30 % headroom about 25 modules fit by memory; CPU, disk (images, backups, logs) and the 8 cores are tracked as modules are added. Exceeding the budget requires an ADR on host sizing. The template ships these limits.
 - NFR-8 Observability: JSON logs to stdout with timestamp, level, service, `correlationId` (`X-Correlation-Id`), no personal content; log rotation 10 MB x 5; Spring Actuator liveness/readiness and Prometheus metrics on an internal port; Prometheus/Grafana optional (compose profile), not required in phase 1.
-- NFR-9 Time and TLS: NTP-synchronised hosts; tokens with skew > 60 s are rejected and readiness reports drift; TLS at the proxy with a certificate from the internal CA, trusted by all JVMs and Keycloak (also for LDAPS); certificates expiring in < 30 days raise a health warning.
+- NFR-9 Time and TLS: NTP-synchronised hosts; tokens with skew > 60 s are rejected and readiness reports drift; TLS at the proxy with a certificate from the internal Windows Active Directory CA (enrollment process to be agreed with the CA owner), trusted by all JVMs and Keycloak (also for LDAPS); certificates expiring in < 30 days raise a health warning.
 
 ## 6. UI/UX
 Details apply to the shell and bind modules through the SDK, the design system and the registration checklist.
@@ -128,7 +127,7 @@ Details apply to the shell and bind modules through the SDK, the design system a
 - UI-9 Launcher lists permitted, enabled modules by manifest category with type-to-filter search, opens with `Meta`/`Ctrl+Esc`, and lists recent items. Texts come from the module i18n bundle and are sorted by active locale.
 - UI-10 Users may pin modules as desktop icons (grid, stored per user); unavailable modules stay visible but disabled with the reason.
 - UI-11 The tray shows clock, notification centre, and language/theme/user menu. Toasts have severity; warnings and errors do not auto-dismiss; announced via `aria-live`. Delivery and storage belong to the notification capability (not in this PRD).
-- UI-12 Narrow viewport (< 768 px or coarse pointer): single-window mode with maximized window, bottom switcher, full-screen launcher, no move/resize/snap, separate stored layout. Modules may declare `minViewport`.
+- UI-12 Narrow viewport (< 768 px or coarse pointer): single-window mode with maximized window, bottom switcher, full-screen launcher, no move/resize/snap, separate stored layout. Modules may declare `minViewport`. Touch and kiosk optimization is out of scope (Q8).
 
 ### 6.3 States
 Shared components: Loading (skeleton after 300 ms, spinner after 1 s, timeout message after 15 s), Empty, Error (what happened, correlation ID, Retry), Forbidden, NotFound, Offline (shell banner; modules mark stale data), SessionExpired.
@@ -146,7 +145,7 @@ Shared components: Loading (skeleton after 300 ms, spinner after 1 s, timeout me
 - UI-20 A manual screen-reader pass (NVDA + Firefox, JAWS + Chrome, VoiceOver if used) is part of the release checklist for shell changes.
 
 ### 6.6 Design system and theming
-- UI-21 One versioned package `@slg-os/design-system` (React components on Bootstrap 5.3, shared as a Module Federation singleton) with `--slg-*` design tokens mapped onto Bootstrap variables. Modules use tokens and components only; raw hex colours, global CSS, own Bootstrap build, `!important` and global selectors are rejected by a lint rule in the template and by the registration checklist.
+- UI-21 One versioned package `@slg-os/design-system` (React components on Bootstrap 5.3, shared as a Module Federation singleton) with `--slg-*` design tokens mapped onto Bootstrap variables. Modules use tokens and components only; raw hex colours, global CSS, own Bootstrap build, `!important` and global selectors are rejected by a lint rule in the template and by the registration checklist. iframe-embedded tools are an exception that requires an ADR and must provide a meaningful title, focus hand-off and theme/language signals where possible (Q21).
 - UI-22 The shell sets `data-bs-theme` on `<html>`; modules must render correctly in both themes, never read `prefers-color-scheme`, and switch live. Default: OS preference at first login, then the user's choice. A contract test renders the reference module in both themes.
 - UI-23 Respect `prefers-reduced-motion` and `forced-colors`; 200 % zoom and 400 % reflow without loss of function.
 
@@ -166,19 +165,19 @@ Shared components: Loading (skeleton after 300 ms, spinner after 1 s, timeout me
 - Contract artifacts: manifest schema (versioned JSON schema), SDK, REST conventions (versioned, OpenAPI, breaking-change diff in CI), federated remote conventions.
 
 ## 8. Security and data protection
-- 8.1 OIDC: public client with authorization code + PKCE (S256), exact redirect URIs. Access tokens <= 5 min; rotating single-use refresh tokens; idle timeout 30 min, absolute session 10 h. Tokens are held in memory only (never localStorage/sessionStorage). A backend-for-frontend with HttpOnly cookies is the alternative and is decided before the shell spike (Q11). Backends accept bearer tokens and validate issuer, per-module audience, signature (cached JWKS), expiry and `azp`.
+- 8.1 OIDC: public client with authorization code + PKCE (S256), exact redirect URIs. Access tokens <= 5 min; rotating single-use refresh tokens; idle timeout 30 min, absolute session 10 h. Tokens are held in memory only (never localStorage/sessionStorage); a backend-for-frontend is not used (Q11). Kerberos/SPNEGO SSO is not enabled (Q1). Backends accept bearer tokens and validate issuer, per-module audience, signature (cached JWKS), expiry and `azp`.
 - 8.2 Logout and revocation: RP-initiated logout; back-channel logout feeds a short-lived session denylist (TTL = access-token lifetime) consulted by the SDK. A user disabled in AD loses access within one access-token lifetime plus the Keycloak LDAP sync interval (<= 15 min). Administrators can revoke all sessions (audited).
-- 8.3 Trust boundary of federated remotes: remotes run in the shell origin with access to the DOM and in-memory tokens. ADR-0007 is therefore a security control: only admin-approved remote entry URLs on the platform origin are loaded; the manifest records a SHA-384 hash of the remote entry, checked on registration and on every change; versions are promoted four-eyes; no external CDNs or scripts at runtime; module CI uses locked dependencies, scanning and signed images; the SDK exposes only `getAccessToken()`. Residual risk (a compromised module build can read the user's access token) is accepted by the owner and documented (Q12b).
+- 8.3 Trust boundary of federated remotes: remotes run in the shell origin with access to the DOM and in-memory tokens. ADR-0007 is therefore a security control: only admin-approved remote entry URLs on the platform origin are loaded; the manifest records a SHA-384 hash of the remote entry, checked on registration and on every change; versions are promoted four-eyes; no external CDNs or scripts at runtime; module CI uses locked dependencies, scanning and signed images; the SDK exposes only `getAccessToken()`. Residual risk (a compromised module build can read the user's access token) is accepted by the owner (Q12b, 2026-10-19); the DPO is informed as part of Q23.
 - 8.4 Service-to-service: each module backend has a Keycloak service account (client credentials) with audience-restricted least-privilege scopes, secrets from Docker secrets rotated at least yearly. User tokens are propagated only to the core; module-to-module calls use service identity plus the user id as audit claim. Module containers are on an internal network, not published on host ports.
 - 8.5 Reverse proxy: only the proxy is exposed (TLS 1.2+, HSTS). It strips inbound `X-Forwarded-*`, `Forwarded` and identity headers and sets them itself; backends trust such headers only from the proxy network; identity comes from validated tokens, never headers.
 - 8.6 Manifest validation and SSRF: JSON schema validation with size limit; server-side fetches only to an allowlist of internal module service names, http(s) only, fixed ports, no redirects, resolved IPs must not be loopback, link-local or metadata addresses, 5 s timeout.
-- 8.7 Keycloak and AD: LDAPS with certificate validation; dedicated read-only AD service account limited to the needed OUs; brute-force detection on; admin console not routed via the public proxy; realm export contains no secrets; defined patch cadence.
+- 8.7 Keycloak and AD (service account and certificate rotation operated by the owner's team, Q20): LDAPS with certificate validation; dedicated read-only AD service account limited to the needed OUs; brute-force detection on; admin console not routed via the public proxy; realm export contains no secrets; defined patch cadence.
 - 8.8 Audit log integrity: see FR-9. Exports go to the read-only backup.
-- 8.9 Data protection (DSGVO): personal data processed by the core: user id, display name, email, AD group names (token), IP address (audit), UI preferences, technical logs. Purpose: authentication, authorization, security accountability, operation. Legal basis proposal: Art. 6(1)(f) DSGVO and § 26 BDSG; a works council agreement is required before go-live because login and audit data could enable behaviour or performance monitoring (BetrVG § 87(1) Nr. 6); the audit log is not used for performance evaluation. Proposed retention (needs DPO and works council sign-off): audit log 12 months, application logs 30 days, preferences 90 days after the account disappears from AD. Audit log access for the auditor role only, access itself audited. Logs contain pseudonymous ids, never names, emails or content. An Art. 30 record is created and the DPO decides on a DPIA before go-live. The core can export and delete a user's preferences and look up audit entries on request.
+- 8.9 Data protection (DSGVO): personal data processed by the core: user id, display name, email, AD group names (token), IP address (audit), UI preferences, technical logs. Purpose: authentication, authorization, security accountability, operation. Legal basis proposal: Art. 6(1)(f) DSGVO and § 26 BDSG; a works council agreement is required before go-live because login and audit data could enable behaviour or performance monitoring (BetrVG § 87(1) Nr. 6); the audit log is not used for performance evaluation. Retention (owner decision, DPO and works council sign-off still required, Q23): audit log 6 months, application logs 30 days, preferences 90 days after the account disappears from AD. Audit log access for the auditor role only, access itself audited. Logs contain pseudonymous ids, never names, emails or content. An Art. 30 record is created and the DPO decides on a DPIA before go-live. The core can export and delete a user's preferences and look up audit entries on request.
 - 8.10 Secrets: Docker secrets from files (0400), no secrets in images, repositories or realm export, per-module DB credentials.
 
 ## 9. Testing strategy
-- Java (proposal, verify in spike): latest LTS JDK (JDK 25 proposed, 21 fallback) and Spring Boot 4.x, Maven, JUnit 5, AssertJ, Mockito, Spring Boot Test, Testcontainers (PostgreSQL; Keycloak with the versioned realm import; LDAP stub for groups), Spring Cloud Contract or Pact for REST contracts, ArchUnit ("no cross-schema access"), JaCoCo.
+- Java (proposal, verified against official documentation when the skeleton is created, Q2/Q3): latest LTS JDK (JDK 25 proposed, 21 fallback) and Spring Boot 4.x, Maven, JUnit 5, AssertJ, Mockito, Spring Boot Test, Testcontainers (PostgreSQL; Keycloak with the versioned realm import; LDAP stub for groups), Spring Cloud Contract or Pact for REST contracts, ArchUnit ("no cross-schema access"), JaCoCo.
 - Frontend: Vitest + Testing Library (coverage v8), MSW, Playwright for E2E including axe checks, the Module Federation plugin selected in the spike.
 - Module Federation: the shell has a mock remote fixture; a Playwright contract test loads the template module's built `remoteEntry.js` and asserts mount, theme/language propagation, error boundary on 500/unreachable remote, and shared singleton versions.
 - Contract tests: manifest schema against golden valid/invalid manifests; SDK against the previous contract version; OpenAPI diff (oasdiff) fails on breaking changes.
@@ -187,40 +186,45 @@ Shared components: Loading (skeleton after 300 ms, spinner after 1 s, timeout me
 
 ## 10. Rollout and operations
 - Topology: compose services `proxy`, `keycloak`, `postgres`, `core-backend`, `shell`, plus modules. Health-gated startup order: postgres, keycloak, core-backend, shell/proxy; modules start after the core-backend and tolerate its absence by retrying.
-- Deploy/discovery: modules publish semver-tagged images to an internal container registry (reachability from the host to be confirmed, Q18) and a manifest. Operators add a compose file for the module (pinned by image digest) and an administrator registers the manifest (FR-4). Proxy routes `/modules/<id>/api` and `/modules/<id>/remote` are generated from registry entries; the registry, not Docker labels, is the source of truth. Modules send an authenticated heartbeat for health only.
+- Deploy/discovery: modules publish semver-tagged images to GitHub Container Registry (ghcr.io; the host pulls, outbound connections are allowed, Q10/Q18) and a manifest. Operators add a compose file for the module (pinned by image digest) and an administrator registers the manifest (FR-4). Proxy routes `/modules/<id>/api` and `/modules/<id>/remote` are generated from registry entries; the registry, not Docker labels, is the source of truth. Modules send an authenticated heartbeat for health only.
 - Upgrade/rollback: change digest, `up -d <id>`, readiness-gated; rollback = previous digest, permitted because migrations are expand/contract. Core upgrades follow the same path after a backup.
-- Contract versioning: SemVer `major.minor`; minor is additive, major is breaking. The platform supports the current and previous major for at least 6 months; React major and design-system range are pinned per contract major.
+- Contract versioning: SemVer `major.minor`; minor is additive, major is breaking. The platform supports only the current major (Q13): a breaking contract change is released together with updated modules, and modules not yet updated are disabled by registration validation until they are. React major and design-system range are pinned per contract major.
 - Failure modes: AD down: existing sessions keep working, new logins show a localized error and raise an alert. Keycloak down: running sessions continue until token expiry; modules validate locally with a cached JWKS.
 - Phase 1 delivers shell, sign-in, registry, permission mapping, audit log, one reference module, module template, backup scripts and a restore rehearsal.
 
-## 11. Open questions
-Owner is Benjamin Honauer unless stated. "Needed by" is the milestone before which the answer must exist.
+## 11. Decisions and open questions
+Owner is Benjamin Honauer unless stated. Decisions were taken in the owner interview on 2026-10-19.
 
-| # | Question | Needed by |
+### 11.1 Decisions
+| # | Decision | Effect in this PRD |
 |---|---|---|
-| Q1 | Is Kerberos/SPNEGO SSO required, or is a Keycloak login form acceptable? | shell spike |
-| Q2 | Java/Spring baseline: JDK 25 LTS and Spring Boot 4.x proposed, to be verified | skeleton |
-| Q3 | Test tooling as in section 9; confirm | skeleton |
-| Q4 | Window manager: library only if it supports keyboard move/resize and ARIA, else in-house | shell spike |
-| Q5 | Maturity of the Vite Module Federation plugin (spike, ADR-0005) | shell spike |
-| Q6 | Audit retention (12 months proposed) and reader roles; with DPO and works council | before go-live |
-| Q7 | Token lifetime (5 min proposed) and acceptable delay for disabling a user (<= 15 min proposed) | shell spike |
-| Q8 | Mobile/touch/kiosk use in scope beyond the narrow fallback? Touch targets 44 px? | shell PRD |
-| Q9 | Secrets and backup: Docker secrets, SMB/NFS backup target with encryption proposed | before go-live |
-| Q10 | Module artifact publishing: internal registry, SemVer tags, deploy by digest proposed | module template |
-| Q11 | Tokens in memory vs. backend-for-frontend with HttpOnly cookies | shell spike |
-| Q12 | Resolve permissions in the token or via core API; token size limit | skeleton |
-| Q12b | Management/DPO sign-off of the accepted residual risk in 8.3 | before go-live |
-| Q13 | Contract compatibility: parallel majors and deprecation window (current + previous, 6 months proposed) | module template |
-| Q14 | Auditor role in phase 1 or deferred? | PRD approval |
-| Q15 | Service-to-service auth: client credentials vs. token exchange (client credentials proposed) | skeleton |
-| Q16 | Confirm admin-only registration (no module self-registration) and the review workflow link to `module-registration-checklist.md` | PRD approval |
-| Q17 | Amend ADR-0008 to cover service-account events and module audit needs in module PRDs? | PRD approval |
-| Q18 | Host size, backup target, internal CA, container registry reachable from the host (owner: Benjamin Honauer / infrastructure) | before go-live |
-| Q19 | Shell deep links via History API with proxy fallback (recommended) vs. hash routes | shell spike |
-| Q20 | Who operates the AD read-only service account and LDAPS certificate rotation? (owner: AD admin) | before go-live |
-| Q21 | Are iframe exceptions (ADR-0005) subject to the same accessibility obligations? | PRD approval |
-| Q22 | Does a legal or works council requirement demand more than WCAG 2.2 AA? | PRD approval |
+| Q1 | No Kerberos/SPNEGO SSO for now; Keycloak login form against AD. Can be enabled later without architecture change. | 8.1, ADR-0001 stays valid |
+| Q2/Q3 | JDK/Spring Boot versions and test tooling named in section 9 are verified against official documentation when the project skeleton is created, then recorded in `CLAUDE.md`. | Section 9 |
+| Q4 | The spike decides between a window-manager library and in-house build; a library is acceptable only with keyboard move/resize and ARIA support. | UI-1 to UI-8 |
+| Q6 | Audit log retention is **6 months** (working value; DPO and works council must still sign off before go-live). | 8.9 |
+| Q7 | Permission changes and disabled AD users take effect within **15 minutes** (access token 5 min, LDAP sync up to 15 min). | FR-5, 8.2 |
+| Q8 | Desktop only; narrow mode is a fallback, no touch or kiosk optimization. | UI-12 |
+| Q9 | Docker secrets from files; nightly encrypted backup to a **configurable SMB target** outside the host. | NFR-5, 8.10 |
+| Q10 | Module images are published to GitHub Container Registry (ghcr.io); the host may pull (outbound connections are allowed). | Section 10 |
+| Q11 | Access tokens are held in memory only; no backend-for-frontend. | 8.1 |
+| Q12 | The SDK resolves effective permissions via the core API with a short cache; tokens carry identity and AD groups only. | FR-5 |
+| Q12b | The owner accepts the residual risk that federated remotes run in the shell origin and a compromised module build could read the in-memory access token; mitigations are in 8.3. | 8.3 |
+| Q13 | Only the **current contract major** is supported. Every breaking contract change requires all modules to be updated before or together with the platform upgrade. | FR-6, section 10 |
+| Q14 | No auditor role in phase 1; platform administrators read the audit log (reads are audited). | Section 3, 8.9 |
+| Q15 | Client credentials service accounts per module. | 8.4 |
+| Q16 | Modules are registered by administrators only; no self-registration. | FR-4 |
+| Q17 | ADR-0008 stays as is; FR-9 is limited to the events it names plus unavoidable administrative events. | FR-9 |
+| Q18 | Host: 8 vCPU, 32 GB RAM, 500 GB disk. Internal CA is the Windows Active Directory CA. Outbound connections are allowed. An SMB backup target exists and its location is configuration. | NFR-5, NFR-7, NFR-9 |
+| Q19 | Deep links use the History API with proxy fallback to the shell. | UI-5 |
+| Q20 | The owner's team operates the read-only AD service account and LDAPS certificate rotation. | 8.7 |
+| Q21 | iframe exceptions need a meaningful title, focus hand-off and theme/language signals where possible, and require an ADR. | UI-21 |
+| Q22 | WCAG 2.2 AA is sufficient; no stricter legal or works-council requirement known. | NFR-4 |
+
+### 11.2 Still open
+| # | Question | Owner | Needed by |
+|---|---|---|---|
+| Q5 | Maturity of the Vite Module Federation plugin (ADR-0005) | platform team | shell spike |
+| Q23 | Works council agreement and DPO decision (Art. 30 record, DPIA) covering 8.9; the DPO is also informed of the accepted residual risk in 8.3 | Benjamin Honauer | before go-live |
 
 ## 12. Review log
 Four independent review agents (fresh context, no authorship of this PRD) reviewed it on 2026-10-19. Each wrote findings and proposed text; the author integrated them, since concurrent edits to one file would conflict.
@@ -240,4 +244,6 @@ Conflicts between reviews and how they were resolved:
 - Version numbers (JDK 25, Spring Boot 4.x, plugins) come from the reviewer's knowledge and are unverified; they stay proposals until the spike.
 - The security review asked for a broader audit event list than ADR-0008 states; the PRD includes it and raises Q17 instead of editing the accepted ADR.
 
-Open for a follow-up review pass: none of the perspectives re-reviewed the integrated text.
+Owner interview 2026-10-19: 21 of the 22 original open questions were decided (section 11.1). Consequences applied: ADR-0008 stays unchanged, so the broader audit events proposed by the security review were removed from FR-9; supporting only the current contract major removes the N-1 compatibility proposed by the operations review; the 32 GB host raises the module capacity estimate. Q5 (plugin spike) remains open; Q23 (works council and DPO) was added.
+
+Open for a follow-up review pass: none of the perspectives re-reviewed the integrated text or the decisions applied afterwards.
