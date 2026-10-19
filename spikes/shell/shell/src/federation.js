@@ -1,4 +1,6 @@
 import { registerRemotes, loadRemote } from '@module-federation/runtime';
+import { version as reactVersion } from 'react';
+import semver from 'semver';
 
 const MODULE_PREFIX = '/modules/';
 
@@ -13,6 +15,16 @@ export function validateEntry(m) {
   return e;
 }
 
+// WP1.4: compare the manifest's declared requirements with what the shell provides, at registration time.
+export function checkRequires(m) {
+  const need = m.requires?.react;
+  if (need && !semver.satisfies(reactVersion, need)) {
+    throw new Error(`incompatible: module needs react ${need}, shell provides ${reactVersion}`);
+  }
+}
+
+const skipRequires = new URLSearchParams(location.search).has('skipRequires'); // spike-only switch to observe runtime behaviour
+
 export async function fetchRegistry() {
   const res = await fetch('/registry/modules.json', { cache: 'no-store' });
   if (!res.ok) throw new Error(`registry ${res.status}`);
@@ -22,6 +34,7 @@ export async function fetchRegistry() {
   for (const m of modules) {
     try {
       validateEntry(m);
+      if (!skipRequires) checkRequires(m);
       accepted.push(m);
     } catch (e) {
       rejected.push({ id: m.id, error: String(e.message) });

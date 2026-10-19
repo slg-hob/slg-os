@@ -3,12 +3,16 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "scripts": { "build": "vite build", "dev": "vite --port 5100" },
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --port 5100"
+  },
   "dependencies": {
     "@module-federation/runtime": "^2.0.0",
     "bootstrap": "^5.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "semver": "^7.8.5",
     "spike-sdk": "file:../sdk"
   },
   "devDependencies": {
