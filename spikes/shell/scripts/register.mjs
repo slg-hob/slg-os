@@ -6,7 +6,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statS
 import { join, relative } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
-const dirs = { a: 'remote-a', b: 'remote-b', mismatch: 'remote-mismatch' };
+const dirs = { a: 'remote-a', b: 'remote-b', mismatch: 'remote-mismatch', evil: 'remote-evil' };
 const manifest = JSON.parse(readFileSync(join(root, 'registry/modules.json'), 'utf8'));
 
 const walk = (d) => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));

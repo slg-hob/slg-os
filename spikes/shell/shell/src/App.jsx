@@ -4,6 +4,9 @@ import { shellMessages, loadModuleBundle, lookup } from './i18n.js';
 import { fetchRegistry, loadModuleComponent } from './federation.js';
 import { initAuth, getAccessToken, signOut, mgr } from './auth.js';
 
+// Only non-secret profile data goes into React state: the fiber tree is readable by every module (WP3.6 finding).
+const publicUser = (u) => ({ profile: { preferred_username: u.profile.preferred_username, sub: u.profile.sub } });
+
 class WindowBoundary extends Component {
   state = { error: null };
   static getDerivedStateFromError(error) {
@@ -69,10 +72,10 @@ function ModuleWindow({ m, shell, s, onClose }) {
 export default function App() {
   const [auth, setAuth] = useState({ status: 'init' });
   useEffect(() => {
-    initAuth().then((r) => setAuth(r.user ? { status: 'ready', user: r.user } : { status: r.frame ? 'frame' : 'redirect' }))
+    initAuth().then((r) => setAuth(r.user ? { status: 'ready', user: publicUser(r.user) } : { status: r.frame ? 'frame' : 'redirect' }))
       .catch((e) => setAuth({ status: 'error', error: String(e.message) }));
     const onExpired = () => setAuth((a) => ({ ...a, status: 'expired' }));
-    const onLoaded = (user) => setAuth({ status: 'ready', user });
+    const onLoaded = (user) => setAuth({ status: 'ready', user: publicUser(user) });
     mgr.events.addAccessTokenExpired(onExpired);
     mgr.events.addUserLoaded(onLoaded);
     return () => { mgr.events.removeAccessTokenExpired(onExpired); mgr.events.removeUserLoaded(onLoaded); };

@@ -63,6 +63,11 @@ http {
       add_header X-Content-Type-Options nosniff always;
       alias @ROOT@/.run/store/b/current/;
     }
+    location /modules/evil/remote/ {
+      add_header @CSP_HEADER@ $csp always;
+      add_header X-Content-Type-Options nosniff always;
+      alias @ROOT@/.run/store/evil/current/;
+    }
     location /modules/mismatch/remote/ {
       add_header @CSP_HEADER@ $csp always;
       add_header X-Content-Type-Options nosniff always;
@@ -70,7 +75,7 @@ http {
     }
 
     # Hostile module container behind the proxy (WP1.11): headers modules must not control are stripped.
-    location /modules/evil/ {
+    location /modules/hostile/ {
       proxy_pass http://127.0.0.1:5201;
       proxy_hide_header Set-Cookie;
       proxy_hide_header Content-Security-Policy;

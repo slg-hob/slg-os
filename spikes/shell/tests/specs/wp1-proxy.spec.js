@@ -3,7 +3,7 @@ import { trackCsp, cspViolations } from './helpers.js';
 
 test.describe('WP1.11 proxy hardening', () => {
   test('headers a module container must not control are stripped', async ({ request }) => {
-    const res = await request.get('/modules/evil/remote/x.js');
+    const res = await request.get('/modules/hostile/remote/x.js');
     const h = res.headers();
     expect(h['set-cookie']).toBeUndefined();
     expect(h['content-security-policy']).toBeUndefined();
@@ -14,7 +14,7 @@ test.describe('WP1.11 proxy hardening', () => {
 
   test('wrong MIME type is not executed as a module (nosniff)', async ({ page }) => {
     await page.goto('/fixtures/integrity/blank.html');
-    const r = await page.evaluate(() => import('/modules/evil/remote/wrong-mime.js').then(() => 'ran', () => 'refused'));
+    const r = await page.evaluate(() => import('/modules/hostile/remote/wrong-mime.js').then(() => 'ran', () => 'refused'));
     expect(r).toBe('refused');
     expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
   });
@@ -54,9 +54,9 @@ test.describe('WP1.11 proxy hardening', () => {
   test('service worker registration from a module path is blocked by worker-src none', async ({ page }) => {
     await trackCsp(page);
     await page.goto('http://localhost:8081/');
-    for (const scope of ['/', '/modules/evil/remote/']) {
+    for (const scope of ['/', '/modules/hostile/remote/']) {
       const r = await page.evaluate((scope) =>
-        navigator.serviceWorker.register('/modules/evil/remote/sw.js', { scope }).then(() => 'registered', (e) => `refused: ${e.name}`), scope);
+        navigator.serviceWorker.register('/modules/hostile/remote/sw.js', { scope }).then(() => 'registered', (e) => `refused: ${e.name}`), scope);
       expect(r, scope).toMatch(/^refused/);
     }
     const v = await cspViolations(page);
