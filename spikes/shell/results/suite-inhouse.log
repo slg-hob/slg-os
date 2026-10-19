@@ -1,0 +1,103 @@
+
+Running 48 tests using 1 worker
+
+  ✓   1 [chromium] › specs/wp1-failures.spec.js:10:5 › WP1.4a: mismatched remote is rejected at registration with a clear message (778ms)
+WP1.4b outcome when loaded first: rendered with its own React copy (failed open)
+  ✓   2 [chromium] › specs/wp1-failures.spec.js:20:5 › WP1.4b: runtime strictVersion, mismatched remote loaded first: outcome is not reliable (closed or open) (759ms)
+  ✓   3 [chromium] › specs/wp1-failures.spec.js:30:5 › WP1.4c: runtime strictVersion, mismatched remote loaded after another remote fails open (885ms)
+  ✓   4 [chromium] › specs/wp1-failures.spec.js:41:5 › WP1.7a: remote unreachable (network abort) is contained to its window (863ms)
+  ✓   5 [chromium] › specs/wp1-failures.spec.js:51:5 › WP1.7b: remote returns 500 (802ms)
+  ✓   6 [chromium] › specs/wp1-failures.spec.js:60:5 › WP1.7c: remote throws on render; other windows stay usable; retry remounts (1.0s)
+  ✓   7 [chromium] › specs/wp1-failures.spec.js:74:5 › WP1.7d: remote entry served with the wrong content (HTML instead of JS) is contained (893ms)
+  ✓   8 [chromium] › specs/wp1-failures.spec.js:83:5 › WP1.2: registry entries outside /modules/<id>/remote/ are rejected (666ms)
+  ✓   9 [chromium] › specs/wp1-federation.spec.js:13:5 › E1: two compliant remotes load at runtime from registry data (1.1s)
+  ✓  10 [chromium] › specs/wp1-federation.spec.js:26:5 › WP1.8: theme and language switch live without reload and keep module state (1.1s)
+  ✓  11 [chromium] › specs/wp1-integrity-federation.spec.js:22:7 › WP1.5b registry integrity + immutable store (real federation remotes) › tampered chunk of a registered remote is refused and its code does not run (880ms)
+  ✓  12 [chromium] › specs/wp1-integrity-federation.spec.js:34:7 › WP1.5b registry integrity + immutable store (real federation remotes) › tampered remoteEntry is refused (640ms)
+  ✓  13 [chromium] › specs/wp1-integrity-federation.spec.js:42:7 › WP1.5b registry integrity + immutable store (real federation remotes) › untampered remote still loads under enforcing CSP with the nonce import map (no violations) (848ms)
+  ✓  14 [chromium] › specs/wp1-integrity-federation.spec.js:50:7 › WP1.5b registry integrity + immutable store (real federation remotes) › TOCTOU: modifying the container build after registration does not change what is served (689ms)
+WP1.5a(i): {"good":"loaded","bad":"blocked","tampered":"blocked"}
+  ✓  15 [chromium] › specs/wp1-integrity.spec.js:23:7 › WP1.5a browser SRI behaviour (Chromium only; Firefox not available in this environment) › (i) <script type=module integrity>: correct hash loads, wrong hash blocks, tampered body blocks (156ms)
+WP1.5a(ii) modulepreload with wrong hash then import(): {"outcome":"preload-blocked","imp":"import-failed"}
+WP1.5a(ii) log after import: []
+  ✓  16 [chromium] › specs/wp1-integrity.spec.js:39:7 › WP1.5a browser SRI behaviour (Chromium only; Firefox not available in this environment) › (ii) <link rel=modulepreload integrity> followed by import(): does import() honour the preload hash? (132ms)
+WP1.5a(iii) importmap supported: [33mtrue[39m
+WP1.5a(iii/iv) tampered chunk, import map hashes both: import-failed: Failed to fetch dynamically imported module: https://localhost:8443/fixtures-ope []
+  ✓  17 [chromium] › specs/wp1-integrity.spec.js:55:7 › WP1.5a browser SRI behaviour (Chromium only; Firefox not available in this environment) › (iii)+(iv) import map integrity covers dynamic import() and chunks imported by a verified entry (160ms)
+  ✓  18 [chromium] › specs/wp1-integrity.spec.js:72:7 › WP1.5a browser SRI behaviour (Chromium only; Firefox not available in this environment) › (iv) entry verified only by script integrity: a tampered chunk is NOT detected (152ms)
+WP1.6 inline importmap violations: [{"directive":"script-src-elem","blocked":"inline","source":""}]
+  ✓  19 [chromium] › specs/wp1-integrity.spec.js:87:7 › WP1.6 under the strict CSP › inline import map is blocked by script-src self (dynamic import-map integrity needs a nonce/hash) (135ms)
+  ✓  20 [chromium] › specs/wp1-proxy.spec.js:5:7 › WP1.11 proxy hardening › headers a module container must not control are stripped (25ms)
+  ✓  21 [chromium] › specs/wp1-proxy.spec.js:15:7 › WP1.11 proxy hardening › wrong MIME type is not executed as a module (nosniff) (143ms)
+  ✓  22 [chromium] › specs/wp1-proxy.spec.js:22:7 › WP1.11 proxy hardening › path traversal variants never return content outside the served roots (88ms)
+  ✓  23 [chromium] › specs/wp1-proxy.spec.js:40:7 › WP1.11 proxy hardening › client-supplied forwarding and identity headers are overwritten or dropped (39ms)
+WP1.11 CSP violations (expected worker-src): [{"directive":"worker-src","blocked":"http://localhost:8081/modules/hostile/remote/sw.js","source":""},{"directive":"worker-src","blocked":"http://localhost:8081/modules/hostile/remote/sw.js","source":""}]
+  ✓  24 [chromium] › specs/wp1-proxy.spec.js:54:7 › WP1.11 proxy hardening › service worker registration from a module path is blocked by worker-src none (252ms)
+  ✓  25 [chromium] › specs/wp2-windows.spec.js:29:7 › WP2 acceptance (engine: inhouse) › WP2.1 z-order, single active window, focus moves in and returns on close/minimize (1.3s)
+  ✓  26 [chromium] › specs/wp2-windows.spec.js:54:7 › WP2 acceptance (engine: inhouse) › WP2.2 keyboard-only operation: launcher, menu, move, resize, snap, maximize, switch, close; no trap; 2.5.7 parity (2.3s)
+  ✓  27 [chromium] › specs/wp2-windows.spec.js:124:7 › WP2 acceptance (engine: inhouse) › WP2.2/2.5.7 pointer drag to the left edge snaps like the keyboard command (1.1s)
+WP2.3 axe light: []
+WP2.3 axe dark: []
+  ✓  28 [chromium] › specs/wp2-windows.spec.js:139:7 › WP2 acceptance (engine: inhouse) › WP2.3 semantics: one main, names, h1 titles, aria-current, inert minimized, axe clean (light+dark) (3.3s)
+  ✓  29 [chromium] › specs/wp2-windows.spec.js:162:7 › WP2 acceptance (engine: inhouse) › WP2.3 live region: one polite region at load, exactly one message per action (1.3s)
+  ✓  30 [chromium] › specs/wp2-windows.spec.js:181:7 › WP2 acceptance (engine: inhouse) › WP2.4 title bar stays reachable, minimum size, target size >= 24px (4.4s)
+  ✓  31 [chromium] › specs/wp2-windows.spec.js:213:7 › WP2 acceptance (engine: inhouse) › WP2.5 persistence: restore geometry, order, active; clamp on smaller screen; corrupt/old schema; second tab (4.7s)
+  ✓  32 [chromium] › specs/wp2-windows.spec.js:254:7 › WP2 acceptance (engine: inhouse) › WP2.5 deep links via History API: URL reflects the active window, unknown target is neutral, back/forward (1.4s)
+  ✓  33 [chromium] › specs/wp2-windows.spec.js:270:7 › WP2 acceptance (engine: inhouse) › WP2.6 narrow mode: single window, switcher, no handles, state and focus kept across mode switch, separate layouts (1.8s)
+  ✓  34 [chromium] › specs/wp2-windows.spec.js:295:7 › WP2 acceptance (engine: inhouse) › WP2.6 reflow at 320x256 and text spacing override: no horizontal page scroll, title bar keeps its content (734ms)
+  ✓  35 [chromium] › specs/wp2-windows.spec.js:307:7 › WP2 acceptance (engine: inhouse) › WP2.8 window-modal close guard: focus trapped, other windows inert, Escape stays, leave closes (1.5s)
+  ✓  36 [chromium] › specs/wp2-windows.spec.js:330:7 › WP2 acceptance (engine: inhouse) › WP2.9 theming: both themes render with token colours; forced-colors keeps a visible active outline; contrast via axe (1.8s)
+  ✓  37 [chromium] › specs/wp2-windows.spec.js:344:7 › WP2 acceptance (engine: inhouse) › WP2.10 singleton reopen focuses, multi-instance titled (n), close guard prompts (1.0s)
+WP2.7 drag (inhouse, indicative, container hardware): {"n":213,"p50":16.699999999999818,"p95":16.799999999999955,"long":0}
+WP2.7 leak (inhouse): {"base":{"heap":4967196,"nodes":364,"listeners":193},"rounds":[{"heap":5264308,"nodes":364,"listeners":193},{"heap":5426260,"nodes":364,"listeners":193},{"heap":5235144,"nodes":366,"listeners":193}]}
+  ✓  38 [chromium] › specs/wp2-windows.spec.js:354:7 › WP2 acceptance (engine: inhouse) › WP2.7 performance (indicative): drag frame times with 5 windows; open/close leak check (16.0s)
+  ✓  39 [chromium] › specs/wp3-auth.spec.js:8:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.1 tokens are held in memory only (no token in storage or JS-readable cookies) (652ms)
+  ✓  40 [chromium] › specs/wp3-auth.spec.js:16:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.2 reload and new tab re-establish the session without interaction; open windows are restored (1.8s)
+WP3.5 results {"baseTokenOnA":401,"modBTokenOnA":401,"noToken":401,"modBTokenOnB":403,"audB":"mod-b"}
+  ✓  41 [chromium] › specs/wp3-auth.spec.js:31:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.4/3.5 per-module audience token; finance allowed on mod-a, wrong audience and missing token refused (1.1s)
+  ✓  42 [chromium] › specs/wp3-auth.spec.js:57:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.4 ops user (bob) is refused on mod-a with 403 (1.2s)
+  ✓  43 [chromium] › specs/wp3-auth.spec.js:68:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.3 silent renewal with rotating refresh token before expiry (837ms)
+  ✓  44 [chromium] › specs/wp3-auth.spec.js:79:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.3 failed renewal keeps window state and shows a non-modal banner (UI-13) (842ms)
+WP3.7 concurrent refresh {"first":400,"second":200,"third":400}
+  ✓  45 [chromium] › specs/wp3-auth.spec.js:90:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.7 two concurrent refresh requests with a rotating token: reuse detection outcome (701ms)
+  ✓  46 [chromium] › specs/wp3-auth.spec.js:106:7 › WP3 auth thin slice (alice = finance, bob = ops) › WP3.2 sign-out ends the session: a reload requires login again (own login, so shared sessions stay intact) (2.7s)
+WP3.6 RESULT {
+ "ownToken": false,
+ "offOrigin": "blocked: TypeError",
+ "sameOrigin": "sent: 200",
+ "reactTreeTokens": [],
+ "globals": {
+  "federation": "object",
+  "spikeHook": "undefined"
+ },
+ "cookie": "",
+ "storageKeys": [],
+ "otherWindowText": "secret form text",
+ "serviceWorker": "refused: SecurityError",
+ "capturedAuthHeaders": 1,
+ "capturedRefreshGrants": 2,
+ "replay": "replay with captured module token: 200"
+}
+  ✓  47 [chromium] › specs/wp3-hostile-remote.spec.js:43:5 › WP3.6 hostile remote demonstration (baseline: fetch not locked) (1.4s)
+WP3.6 RESULT {
+ "ownToken": false,
+ "offOrigin": "blocked: TypeError",
+ "sameOrigin": "sent: 200",
+ "reactTreeTokens": [],
+ "globals": {
+  "federation": "object",
+  "spikeHook": "object"
+ },
+ "cookie": "",
+ "storageKeys": [],
+ "otherWindowText": "secret form text",
+ "serviceWorker": "refused: SecurityError",
+ "capturedAuthHeaders": 0,
+ "capturedRefreshGrants": 0,
+ "replay": "nothing captured"
+}
+WP3.6 LOCKED {"fetchWrap":"refused: TypeError","captured":0}
+WP3.6 LOCKED after grant {"params":1,"grants":0,"fetchWrap":"refused: TypeError"}
+  ✓  48 [chromium] › specs/wp3-hostile-remote.spec.js:55:5 › WP3.6 mitigation experiment: locked fetch stops wrapping but not prototype patching (1.5s)
+
+  48 passed (1.2m)

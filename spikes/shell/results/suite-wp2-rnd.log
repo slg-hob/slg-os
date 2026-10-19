@@ -1,0 +1,53 @@
+
+Running 14 tests using 1 worker
+
+  ✓   1 [chromium] › specs/wp2-windows.spec.js:29:7 › WP2 acceptance (engine: rnd) › WP2.1 z-order, single active window, focus moves in and returns on close/minimize (1.6s)
+  ✓   2 [chromium] › specs/wp2-windows.spec.js:54:7 › WP2 acceptance (engine: rnd) › WP2.2 keyboard-only operation: launcher, menu, move, resize, snap, maximize, switch, close; no trap; 2.5.7 parity (2.6s)
+  -   3 [chromium] › specs/wp2-windows.spec.js:124:7 › WP2 acceptance (engine: rnd) › WP2.2/2.5.7 pointer drag to the left edge snaps like the keyboard command
+WP2.3 axe light: []
+WP2.3 axe dark: []
+  ✓   4 [chromium] › specs/wp2-windows.spec.js:139:7 › WP2 acceptance (engine: rnd) › WP2.3 semantics: one main, names, h1 titles, aria-current, inert minimized, axe clean (light+dark) (3.5s)
+  ✓   5 [chromium] › specs/wp2-windows.spec.js:162:7 › WP2 acceptance (engine: rnd) › WP2.3 live region: one polite region at load, exactly one message per action (1.4s)
+  ✓   6 [chromium] › specs/wp2-windows.spec.js:181:7 › WP2 acceptance (engine: rnd) › WP2.4 title bar stays reachable, minimum size, target size >= 24px (5.1s)
+  ✓   7 [chromium] › specs/wp2-windows.spec.js:213:7 › WP2 acceptance (engine: rnd) › WP2.5 persistence: restore geometry, order, active; clamp on smaller screen; corrupt/old schema; second tab (4.1s)
+  ✓   8 [chromium] › specs/wp2-windows.spec.js:254:7 › WP2 acceptance (engine: rnd) › WP2.5 deep links via History API: URL reflects the active window, unknown target is neutral, back/forward (1.7s)
+  ✓   9 [chromium] › specs/wp2-windows.spec.js:270:7 › WP2 acceptance (engine: rnd) › WP2.6 narrow mode: single window, switcher, no handles, state and focus kept across mode switch, separate layouts (1.7s)
+  ✓  10 [chromium] › specs/wp2-windows.spec.js:295:7 › WP2 acceptance (engine: rnd) › WP2.6 reflow at 320x256 and text spacing override: no horizontal page scroll, title bar keeps its content (809ms)
+  ✓  11 [chromium] › specs/wp2-windows.spec.js:307:7 › WP2 acceptance (engine: rnd) › WP2.8 window-modal close guard: focus trapped, other windows inert, Escape stays, leave closes (1.6s)
+  ✓  12 [chromium] › specs/wp2-windows.spec.js:330:7 › WP2 acceptance (engine: rnd) › WP2.9 theming: both themes render with token colours; forced-colors keeps a visible active outline; contrast via axe (1.8s)
+  ✓  13 [chromium] › specs/wp2-windows.spec.js:344:7 › WP2 acceptance (engine: rnd) › WP2.10 singleton reopen focuses, multi-instance titled (n), close guard prompts (1.0s)
+WP2.7 drag (rnd, indicative, container hardware): {"n":203,"p50":16.699999999999818,"p95":16.800000000000182,"long":0}
+WP2.7 leak (rnd): {"base":{"heap":4960212,"nodes":355,"listeners":194},"rounds":[{"heap":5461708,"nodes":355,"listeners":194},{"heap":5627000,"nodes":357,"listeners":194},{"heap":5559072,"nodes":357,"listeners":194}]}
+  ✘  14 [chromium] › specs/wp2-windows.spec.js:354:7 › WP2 acceptance (engine: rnd) › WP2.7 performance (indicative): drag frame times with 5 windows; open/close leak check (16.1s)
+
+
+  1) [chromium] › specs/wp2-windows.spec.js:354:7 › WP2 acceptance (engine: rnd) › WP2.7 performance (indicative): drag frame times with 5 windows; open/close leak check 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m0.1[39m
+    Received:   [31m0.13442731883234024[39m
+
+      402 |     const growth = (k) => rounds.map((x) => (x[k] - base[k]) / base[k]);
+      403 |     expect(Math.max(...growth('nodes'))).toBeLessThan(0.10);
+    > 404 |     expect(Math.max(...growth('heap'))).toBeLessThan(0.10);
+          |                                         ^
+      405 |     expect(rounds[2].listeners).toBeLessThanOrEqual(rounds[0].listeners * 1.05);
+      406 |   });
+      407 | });
+        at /home/user/slg-os/spikes/shell/tests/specs/wp2-windows.spec.js:404:41
+
+    Error Context: test-results/wp2-windows-WP2-acceptance-5fb91-ndows-open-close-leak-check-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/wp2-windows-WP2-acceptance-5fb91-ndows-open-close-leak-check-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/wp2-windows-WP2-acceptance-5fb91-ndows-open-close-leak-check-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › specs/wp2-windows.spec.js:354:7 › WP2 acceptance (engine: rnd) › WP2.7 performance (indicative): drag frame times with 5 windows; open/close leak check 
+  1 skipped
+  12 passed (47.8s)

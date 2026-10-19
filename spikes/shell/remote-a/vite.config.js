@@ -9,6 +9,7 @@ export default defineConfig({
     federation({
       name: 'mod_a',
       filename: 'remoteEntry.js',
+      dts: false, // without a tsconfig the DTS worker crashes the dev server (finding F-MF-3)
       exposes: { './App': './src/App.jsx' },
       shared: {
         react: { singleton: true, requiredVersion: '^19.0.0' },

@@ -3,3 +3,7 @@ Running 2 tests using 1 worker
 
 WP1.10 lan {"summary":{"cold":{"desktopMedianMs":451,"desktopP95Ms":531,"openMedianMs":286,"openP95Ms":320},"warm":{"desktopMedianMs":242,"desktopP95Ms":266,"openMedianMs":106,"openP95Ms":133}},"transfer":{"files":35,"encodedKB":849,"transferKB":859}}
   ✓  1 [chromium] › specs/wp1-perf.spec.js:13:7 › WP1.10 timing profile lan (29.1s)
+WP1.10 lan-cpu4x {"summary":{"cold":{"desktopMedianMs":1737,"desktopP95Ms":1957,"openMedianMs":514,"openP95Ms":577},"warm":{"desktopMedianMs":1255,"desktopP95Ms":1409,"openMedianMs":295,"openP95Ms":359}},"transfer":{"files":35,"encodedKB":849,"transferKB":859}}
+  ✓  2 [chromium] › specs/wp1-perf.spec.js:13:7 › WP1.10 timing profile lan-cpu4x (1.5m)
+
+  2 passed (2.0m)
