@@ -19,7 +19,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 - Shell: sign-in, desktop with in-house window manager (two windows), language and theme switch, state components.
 - One reference module (backend and frontend) loaded through Module Federation.
 - E2E tests against the real stack, `pg_dump` backup script.
-- First step: PRD for the skeleton (repository layout, verified versions of JDK, Spring Boot and tools, CI). ◆ approval of that PRD.
+- First step: [PRD-0003](docs/prd/0003-walking-skeleton.md) (repository layout, verified versions of JDK, Spring Boot and tools, CI, milestones M1 to M6c), approved 2026-10-19. Next: M1 foundation.
 
 ## Phase 1b: Platform capabilities (planned)
 - Admin UI and permission mapping from AD groups to roles and permissions.
