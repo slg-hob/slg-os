@@ -1,0 +1,13 @@
+[
+  { "name": "coverage-drop", "patch": "coverage-drop.patch", "command": "./mvnw -q -pl backend/sdk-backend verify" },
+  { "name": "missing-german-key", "patch": "missing-german-key.patch", "command": "node frontend/tools/check-i18n.mjs frontend" },
+  { "name": "literal-string", "patch": "literal-string.patch", "command": "cd frontend && npx eslint ." },
+  { "name": "unpinned-action", "patch": "unpinned-action.patch", "command": "node scripts/ci/check-workflows.mjs" },
+  { "name": "privileged-trigger", "patch": "privileged-trigger.patch", "command": "node scripts/ci/check-workflows.mjs" },
+  { "name": "version-drift", "patch": "version-drift.patch", "command": "node scripts/ci/check-versions.mjs" },
+  { "name": "skipped-job-fails-gate", "command": "NEEDS_JSON=\"$(cat ci/selftest/fixtures/needs-skipped.json)\" node scripts/ci/gate.mjs" },
+  { "name": "coverage-regression", "command": "node scripts/ci/coverage.mjs compare ci/selftest/fixtures/coverage/current.json ci/selftest/fixtures/coverage/baseline.json" },
+  { "name": "vulnerable-dependency", "command": "SCAN_PATH=ci/selftest/fixtures/vulnerable-npm scripts/ci/security-scan.sh" },
+  { "name": "planted-private-key", "command": "{ printf -- '-----BEGIN %s %s-----\\n' RSA 'PRIVATE KEY'; printf 'MIIEowIBAAKCAQEA%s\\n' 'x7Qm0ZkYpJw2cD9fLhT3sVbN8aGr1eUiOoPyXzCq5W'; printf -- '-----END %s %s-----\\n' RSA 'PRIVATE KEY'; } > leaked.md && node scripts/ci/check-docs.mjs" },
+  { "name": "planted-token", "command": "printf 'token=%s%s\\n' 'ghp_' 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8' > leaked.txt && scripts/ci/security-scan.sh" }
+]

@@ -1,0 +1,9 @@
+{
+  "name": "@slg-os/docs-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned tools of the documentation check (lock file keeps transitive versions fixed).",
+  "devDependencies": {
+    "markdownlint-cli2": "0.23.3"
+  }
+}

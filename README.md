@@ -2,7 +2,7 @@
 
 SLG Operating System: a locally hosted, web-based platform with an OS-like desktop for internal tools and automations of System Logistics. It signs users in against the local Active Directory, authorizes by AD groups, and hosts independently developed modules through a mandatory, versioned module contract.
 
-**Status:** specification phase. No code yet.
+**Status:** implementation phase. The specification (PRD-0001 to PRD-0005) is approved; milestone M1 of the walking skeleton (build and CI foundation) is in place. Build and test commands are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Decisions at a glance
 

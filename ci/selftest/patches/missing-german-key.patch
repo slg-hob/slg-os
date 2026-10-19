@@ -1,0 +1,12 @@
+diff --git a/frontend/shell/src/locales/de/shell.json b/frontend/shell/src/locales/de/shell.json
+index 2583889..4cd890a 100644
+--- a/frontend/shell/src/locales/de/shell.json
++++ b/frontend/shell/src/locales/de/shell.json
+@@ -1,7 +1,6 @@
+ {
+   "app": {
+     "title": "SLG OS",
+-    "loading": "Wird geladen",
+     "welcome": "Willkommen, {name}"
+   }
+ }

@@ -10,7 +10,7 @@ const root = resolve(new URL('../..', import.meta.url).pathname);
 const errors = [];
 const walk = (dir) =>
   readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-    if (['.git', 'node_modules', 'spikes'].includes(e.name)) return [];
+    if (['.git', 'node_modules', 'spikes', 'target', 'dist', 'coverage'].includes(e.name)) return [];
     const p = join(dir, e.name);
     return e.isDirectory() ? walk(p) : [p];
   });

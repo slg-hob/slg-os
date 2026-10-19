@@ -1,0 +1,13 @@
+diff --git a/pom.xml b/pom.xml
+index fd96018..df40666 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -23,7 +23,7 @@
+   </modules>
+ 
+   <properties>
+-    <java.version>25</java.version>
++    <java.version>24</java.version>
+     <maven.compiler.release>25</maven.compiler.release>
+     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <jacoco.version>0.8.15</jacoco.version>

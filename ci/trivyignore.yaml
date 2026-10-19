@@ -1,0 +1,8 @@
+# Accepted findings. Every entry needs a reason and an expiry date (expired_at); an expired entry no longer suppresses the finding.
+# Example:
+# vulnerabilities:
+#   - id: CVE-0000-00000
+#     statement: "Not reachable: reason"
+#     expired_at: 2027-01-31
+vulnerabilities: []
+secrets: []
