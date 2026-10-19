@@ -245,7 +245,7 @@ Resolved by the spike: Q5 (Module Federation with Vite is viable in Chromium, AD
 | Q26 | Production-mode Keycloak: token exchange (confidential client) or refresh-token down-scoping for per-module audiences | platform team | skeleton |
 | Q27 | Host names, certificates (Windows AD CA) and routing for Keycloak on its own origin | Benjamin Honauer | skeleton |
 | Q28 | Gateway session store (PostgreSQL-backed sessions proposed, so sessions survive a restart) | platform team | skeleton |
-| Q23 | Works council agreement and DPO decision (Art. 30 record, DPIA) covering 8.9; the DPO is also informed of the accepted residual risk in 8.3 | Benjamin Honauer | before go-live |
+| Q23 | Works council agreement and DPO decision (Art. 30 record, DPIA) covering 8.9; the DPO is also informed of the remaining risk in 8.3 (Q24) | Benjamin Honauer | before go-live |
 
 ## 12. Review log
 Four independent review agents (fresh context, no authorship of this PRD) reviewed it on 2026-10-19. Each wrote findings and proposed text; the author integrated them, since concurrent edits to one file would conflict.
