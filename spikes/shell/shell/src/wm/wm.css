@@ -1,0 +1,21 @@
+.wm-root { display: flex; flex-direction: column; height: 100vh; }
+.wm-desk { position: relative; flex: 1 1 auto; overflow: hidden; background: var(--bs-tertiary-bg); }
+.wm-win { display: flex; flex-direction: column; overflow: hidden; }
+.wm-win[hidden] { display: none; }
+.wm-win:focus { outline: 0; }
+.wm-win:focus-visible, .wm-active { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
+.wm-titlebar { cursor: move; user-select: none; touch-action: none; }
+.wm-body { flex: 1 1 auto; overflow: auto; }
+.wm-btn { min-width: 32px; min-height: 32px; line-height: 1; }
+.wm-menu { position: absolute; top: 2.6rem; right: .5rem; z-index: 20; min-width: 12rem; }
+.wm-handle { position: absolute; z-index: 5; touch-action: none; }
+.wm-handle-n, .wm-handle-s { left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.wm-handle-n { top: 0; } .wm-handle-s { bottom: 0; }
+.wm-handle-e, .wm-handle-w { top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.wm-handle-e { right: 0; } .wm-handle-w { left: 0; }
+.wm-handle-ne, .wm-handle-nw, .wm-handle-se, .wm-handle-sw { width: 12px; height: 12px; }
+.wm-handle-ne { top: 0; right: 0; cursor: nesw-resize; } .wm-handle-nw { top: 0; left: 0; cursor: nwse-resize; }
+.wm-handle-se { bottom: 0; right: 0; cursor: nwse-resize; } .wm-handle-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+.wm-dialog { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bs-body-bg) 80%, transparent); }
+.wm-taskbar { flex: 0 0 auto; min-height: 44px; }
+.wm-taskbar button { min-height: 32px; }

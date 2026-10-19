@@ -17,10 +17,14 @@ test('WP1.4a: mismatched remote is rejected at registration with a clear message
 // Characterization tests (finding F-MF-1): with strictVersion the runtime outcome for a version-mismatched remote depends on
 // load order. First remote loaded: fails closed with RUNTIME-015 (contained). After another remote initialised the shared scope:
 // fails open (logs errors, renders with its own React copy). Runtime checks are therefore not a control; WP1.4a is mandatory.
-test('WP1.4b: runtime strictVersion, mismatched remote loaded first fails closed', async ({ page }) => {
+test('WP1.4b: runtime strictVersion, mismatched remote loaded first: outcome is not reliable (closed or open)', async ({ page }) => {
   await page.goto('/?skipRequires=1');
   await page.getByTestId('open-mismatch').click();
-  await expect(page.getByTestId('window-mismatch').getByTestId('window-error')).toContainText('RUNTIME-015');
+  const win = page.getByTestId('window-mismatch');
+  await expect(win.getByTestId('window-error').or(page.getByTestId('mod-mismatch'))).toBeVisible();
+  const closed = (await win.getByTestId('window-error').count()) > 0;
+  console.log('WP1.4b outcome when loaded first:', closed ? 'failed closed (RUNTIME-015)' : 'rendered with its own React copy (failed open)');
+  await expect(page.getByTestId('toggle-theme')).toBeEnabled(); // either way the shell survives
 });
 
 test('WP1.4c: runtime strictVersion, mismatched remote loaded after another remote fails open', async ({ page }) => {

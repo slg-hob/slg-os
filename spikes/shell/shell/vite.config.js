@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     federation({
       name: 'shell',
+      dts: false,
       remotes: {},
       shared: {
         react: { singleton: true, requiredVersion: '^19.0.0' },

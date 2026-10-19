@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useShell } from 'spike-sdk';
 
 function Crash() {
@@ -6,7 +6,7 @@ function Crash() {
 }
 
 export default function App() {
-  const { t, theme, language, getAccessToken } = useShell();
+  const { t, theme, language, getAccessToken, setCloseGuard } = useShell();
   const [api, setApi] = useState('');
   const callApi = async () => {
     try {
@@ -17,6 +17,8 @@ export default function App() {
   };
   const [crash, setCrash] = useState(false);
   const [text, setText] = useState('');
+  // UI-8: ask the shell to confirm closing while there is unsaved text.
+  useEffect(() => { setCloseGuard?.(text ? () => true : null); return () => setCloseGuard?.(null); }, [text, setCloseGuard]);
   if (crash) return <Crash />;
   return (
     <div className="p-3" data-testid="mod-a">

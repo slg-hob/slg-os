@@ -10,6 +10,7 @@ async function run(page, url) {
   await page.getByTestId('open-evil').click();
   await expect(page.getByTestId('evil-done')).toHaveText('done');
   // Module A calls its API while the hostile fetch wrapper is installed (cross-module token capture).
+  await page.getByTestId('task-a-1').click(); // bring module A to the front (windows overlap)
   await page.getByTestId('a-call-api').click();
   await expect(page.getByTestId('a-api-result')).toHaveText('200');
   const r = await page.evaluate(async () => {

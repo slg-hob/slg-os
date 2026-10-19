@@ -1,8 +1,9 @@
-import { Component, useCallback, useEffect, useMemo, useState } from 'react';
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ShellProvider } from 'spike-sdk';
 import { shellMessages, loadModuleBundle, lookup } from './i18n.js';
 import { fetchRegistry, loadModuleComponent } from './federation.js';
 import { initAuth, getAccessToken, signOut, mgr } from './auth.js';
+import WindowManager from './wm/WindowManager.jsx';
 
 // Only non-secret profile data goes into React state: the fiber tree is readable by every module (WP3.6 finding).
 const publicUser = (u) => ({ profile: { preferred_username: u.profile.preferred_username, sub: u.profile.sub } });
@@ -27,12 +28,16 @@ class WindowBoundary extends Component {
   }
 }
 
-function ModuleWindow({ m, shell, s, onClose }) {
+// Content of one window. The module component loads when the window is first visible (lazy restore, UI-6).
+function ModuleContent({ w, m, visible, shell, s, guardApi }) {
   const [Comp, setComp] = useState(null);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
+  const seen = useRef(false);
+  if (visible) seen.current = true;
 
   useEffect(() => {
+    if (!seen.current && !visible) return undefined;
     let alive = true;
     setComp(null);
     setError(null);
@@ -40,32 +45,29 @@ function ModuleWindow({ m, shell, s, onClose }) {
       .then(([C]) => alive && setComp(() => C))
       .catch((e) => alive && setError(e));
     return () => { alive = false; };
-  }, [m, attempt]); // language changes must not remount the module (state is kept, UI-25)
+  }, [m, attempt, visible && true]); // language changes must not remount the module (state is kept, UI-25)
 
-  return (
-    <section className="card shadow-sm mb-3" aria-labelledby={`win-${m.id}`} data-testid={`window-${m.id}`}>
-      <header className="card-header d-flex justify-content-between align-items-center">
-        <h2 className="h6 mb-0" id={`win-${m.id}`}>{m.name[shell.language] ?? m.name.en}</h2>
-        <button className="btn btn-sm btn-outline-secondary" onClick={onClose}>{s.close}</button>
-      </header>
-      <div className="card-body p-0">
-        {error && (
-          <div role="alert" className="p-3" data-testid="window-error">
-            <p className="text-danger mb-2">{s.failed}</p>
-            <pre className="small">{String(error.message)}</pre>
-            <button className="btn btn-outline-secondary btn-sm" onClick={() => setAttempt((a) => a + 1)}>{s.retry}</button>
-          </div>
-        )}
-        {!error && !Comp && <p className="p-3 mb-0">{s.loading}</p>}
-        {!error && Comp && (
-          <WindowBoundary s={s} onRetry={() => setAttempt((a) => a + 1)}>
-            <ShellProvider value={{ ...shell, getAccessToken: () => getAccessToken(`mod-${m.id}`) }}>
-              <Comp />
-            </ShellProvider>
-          </WindowBoundary>
-        )}
+  const bound = useMemo(
+    () => ({ ...shell, getAccessToken: () => getAccessToken(`mod-${m.id}`), setCloseGuard: (fn) => guardApi?.set(w.id, fn) }),
+    [shell, m.id, w.id, guardApi]
+  );
+
+  if (error) {
+    return (
+      <div role="alert" className="p-3" data-testid="window-error">
+        <p className="text-danger mb-2">{s.failed}</p>
+        <pre className="small">{String(error.message)}</pre>
+        <button className="btn btn-outline-secondary btn-sm" onClick={() => setAttempt((a) => a + 1)}>{s.retry}</button>
       </div>
-    </section>
+    );
+  }
+  if (!Comp) return <p className="p-3 mb-0">{s.loading}</p>;
+  return (
+    <WindowBoundary s={s} onRetry={() => setAttempt((a) => a + 1)}>
+      <ShellProvider value={bound}>
+        <Comp />
+      </ShellProvider>
+    </WindowBoundary>
   );
 }
 
@@ -89,68 +91,68 @@ function Desktop({ auth }) {
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
   const [registry, setRegistry] = useState({ accepted: [], rejected: [] });
-  // UI-6 (spike): open windows are persisted per browser session and restored after reload.
-  const [open, setOpen] = useState(() => JSON.parse(sessionStorage.getItem('spike.open') || '[]'));
-  useEffect(() => { sessionStorage.setItem('spike.open', JSON.stringify(open)); }, [open]);
   const [, bump] = useState(0);
+  const guardApi = useRef(null);
   const s = shellMessages[language];
+  const engine = new URLSearchParams(location.search).get('wm') === 'rnd' ? 'rnd' : 'inhouse';
 
   useEffect(() => { document.documentElement.setAttribute('data-bs-theme', theme); }, [theme]);
   useEffect(() => { document.documentElement.lang = language; }, [language]);
   useEffect(() => { fetchRegistry().then(setRegistry); }, []);
 
-  // Reload module bundles on language change so the switch applies without a reload.
+  // Load module bundles for the language on switch so the change applies without a reload.
   useEffect(() => {
-    Promise.all(open.map((id) => loadModuleBundle(id, language))).then(() => bump((n) => n + 1));
-  }, [language, open]);
+    Promise.all(registry.accepted.map((m) => loadModuleBundle(m.id, language).catch(() => null))).then(() => bump((n) => n + 1));
+  }, [language, registry.accepted]);
 
   const t = useCallback((ns, key) => lookup(ns, language, key), [language]);
-  const shell = useMemo(
-    () => ({ t, theme, language, getAccessToken }),
-    [t, theme, language]
-  );
+  const shell = useMemo(() => ({ t, theme, language, getAccessToken }), [t, theme, language]);
 
-  const toggle = (id) => setOpen((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
+  const nav = ({ openModule }) => (
+    <nav className="navbar navbar-expand bg-body-tertiary px-3" aria-label={s.launcher}>
+      <span className="navbar-brand">SLG OS spike</span>
+      <ul className="navbar-nav me-auto" data-testid="launcher">
+        {registry.accepted.length === 0 && <li className="nav-item text-body-secondary">{s.noModules}</li>}
+        {registry.accepted.map((m) => (
+          <li className="nav-item" key={m.id}>
+            <button className="btn btn-link nav-link" onClick={() => openModule(m.id)} data-testid={`open-${m.id}`}>
+              {s.open}: {m.name[language] ?? m.name.en}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="d-flex gap-2 align-items-center">
+        <span className="navbar-text" data-testid="user">{auth.user.profile.preferred_username}</span>
+        <button className="btn btn-sm btn-outline-secondary" data-testid="sign-out" onClick={() => signOut()}>{s.signOut}</button>
+        <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-theme" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+          {s.theme}: {theme === 'light' ? s.light : s.dark}
+        </button>
+        <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-lang" onClick={() => setLanguage(language === 'en' ? 'de' : 'en')}>
+          {s.language}: {language.toUpperCase()}
+        </button>
+      </div>
+    </nav>
+  );
 
   return (
     <ShellProvider value={shell}>
-      <nav className="navbar navbar-expand bg-body-tertiary px-3" aria-label={s.launcher}>
-        <span className="navbar-brand">SLG OS spike</span>
-        <ul className="navbar-nav me-auto" data-testid="launcher">
-          {registry.accepted.length === 0 && <li className="nav-item text-body-secondary">{s.noModules}</li>}
-          {registry.accepted.map((m) => (
-            <li className="nav-item" key={m.id}>
-              <button className="btn btn-link nav-link" onClick={() => toggle(m.id)} data-testid={`open-${m.id}`}>
-                {s.open}: {m.name[language] ?? m.name.en}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="d-flex gap-2 align-items-center">
-          <span className="navbar-text" data-testid="user">{auth.user.profile.preferred_username}</span>
-          <button className="btn btn-sm btn-outline-secondary" data-testid="sign-out" onClick={() => signOut()}>Sign out</button>
-          <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-theme" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
-            {s.theme}: {theme === 'light' ? s.light : s.dark}
-          </button>
-          <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-lang" onClick={() => setLanguage(language === 'en' ? 'de' : 'en')}>
-            {s.language}: {language.toUpperCase()}
-          </button>
-        </div>
-      </nav>
       {auth.status === 'expired' && (
-        <div className="alert alert-warning m-3" role="alert" data-testid="session-expired">
-          Session expired. <button className="btn btn-link p-0" onClick={() => mgr.signinSilent().catch(() => mgr.signinRedirect())}>Sign in again</button>
+        <div className="alert alert-warning m-0 rounded-0" role="alert" data-testid="session-expired">
+          {s.sessionExpired} <button className="btn btn-link p-0" onClick={() => mgr.signinSilent().catch(() => mgr.signinRedirect())}>{s.signInAgain}</button>
         </div>
       )}
-      <main className="container-fluid py-3">
-        {registry.rejected.length > 0 && (
-          <div className="alert alert-warning" data-testid="rejected">{registry.rejected.map((r) => `${r.id}: ${r.error}`).join('; ')}</div>
-        )}
-        {open.map((id) => {
-          const m = registry.accepted.find((x) => x.id === id);
-          return m ? <ModuleWindow key={id} m={m} shell={shell} s={s} onClose={() => toggle(id)} /> : null;
-        })}
-      </main>
+      {registry.rejected.length > 0 && (
+        <div className="alert alert-warning m-0 rounded-0" data-testid="rejected">{registry.rejected.map((r) => `${r.id}: ${r.error}`).join('; ')}</div>
+      )}
+      <WindowManager
+        modules={registry.accepted}
+        language={language}
+        s={s}
+        engine={engine}
+        nav={nav}
+        registerGuard={(api) => { guardApi.current = api; bump((n) => n + 1); }}
+        renderContent={(w, m, visible) => <ModuleContent w={w} m={m} visible={visible} shell={shell} s={s} guardApi={guardApi.current} />}
+      />
     </ShellProvider>
   );
 }
