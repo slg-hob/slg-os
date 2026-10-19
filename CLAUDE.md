@@ -45,6 +45,9 @@ Modules are added incrementally and lightly: registering a module and assigning 
 
 "Independent" means the reviewer is a separate agent (fresh context), not the one that wrote the artifact.
 
+### Exception: spike code
+Disposable code under `spikes/` (branch `spike/shell`, see PRD-0002) is exempt from the 80 % coverage gate and from the full implementation workflow, approved by the owner on 2026-10-19. The exception is limited to the spike: `spikes/` is part of no Maven module, npm workspace, coverage gate, image build or release pipeline, is never merged into `main`, and nothing from it is copied into production code without the normal workflow. The spike's acceptance and security tests must still be automated.
+
 ## Platform requirements and architectural principles
 
 These are the intended guardrails for the framework. Refine them in PRDs and ADRs; do not silently deviate. Decisions already taken are in `docs/adr/`.

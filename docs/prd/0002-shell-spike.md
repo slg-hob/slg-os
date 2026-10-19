@@ -140,7 +140,7 @@ The spike runs on developer machines and in a throwaway Docker Compose project `
 | S3 | Decide the principle now: may Rspack replace Vite if the Vite plugin fails (F1, superseding ADR-0005)? | Benjamin Honauer | day 1 |
 | S4 | Which screen reader and browser combinations are deployed in the company? | Benjamin Honauer | day 1 |
 | S5 | Which reference hardware (CPU/RAM/browser) represents the office PCs? | Benjamin Honauer | before day 1 |
-| S6 | Does the owner approve the NFR-S3 exception to `CLAUDE.md` for code under `spikes/` (to be noted in `CLAUDE.md`)? | Benjamin Honauer | PRD approval |
+| S6 | Decided 2026-10-19: the owner approves the NFR-S3 exception to `CLAUDE.md` for code under `spikes/`; it is recorded in `CLAUDE.md`. | Benjamin Honauer | closed |
 | S7 | Who reviews the spike ADRs and the report before acceptance? | Benjamin Honauer | day 10 |
 
 ## 11. Review log
