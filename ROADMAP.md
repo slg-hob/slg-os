@@ -39,7 +39,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 - Restore rehearsal on a clean host, load test, chaos tests (Keycloak, PostgreSQL, core restart, module down).
 - Browser gates: Firefox, WebKit/Safari, Edge on an office PC (`Alt+Space`, shortcut conflicts, performance).
 - Manual screen-reader passes (NVDA + Firefox, JAWS + Chrome).
-- ◆ Works council agreement and data protection decision (Q23), acceptance of the remaining risk (Q24), SMTP relay decision for alert mails (Q30, deferred).
+- ◆ Decided by the owner on 2026-10-19: no formal works-council or DPO gate (Q23), remaining risk accepted (Q24), no alert e-mails (Q30).
 
 ## Later
 - First business modules, each in its own repository with its own PRD, built from the template.
@@ -49,7 +49,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 ## Open decisions and who closes them
 | Item | Needed by | Owner |
 |---|---|---|
-| Q23 works council and DPO (owner position 2026-10-19: no restriction; formal sign-off kept as go-live item) | before go-live | owner |
+| Q23 works council and DPO: **no formal gate, owner decision 2026-10-19** | closed | owner |
 | Q24 remaining risk after the BFF: **accepted 2026-10-19** | closed | owner |
 | Q25a Firefox checks (Safari not required, decided 2026-10-19) | phase 1c | platform team |
 | Q25b manual gates: **owner and team, decided 2026-10-19** | phase 1c | owner |
@@ -57,7 +57,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 | Q27 production Keycloak host name and AD-CA certificates (CI and local use test names, decided 2026-10-19) | before go-live | owner |
 | Q28 confirm PostgreSQL session store | phase 1a | platform team |
 | Q30 SMTP relay for alerts: **no e-mail alerts, decided 2026-10-19** | closed | owner |
-| Q47 pilot module (Lead-Radar-Plattform) is not a Spring backend: path for the module contract | before phase 1b milestone B6 | owner |
+| Q47 pilot module (Lead-Radar-Plattform): **frontend only, decided 2026-10-19**; backend facade or ADR exception is Q59 | start of phase 1b milestone B6 | platform team |
 | Enable branch protection on `main` ([instructions](docs/branch-protection.md)) | now | owner |
 
 ## Main risks
