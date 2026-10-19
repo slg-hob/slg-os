@@ -1,6 +1,6 @@
 # 0010. Module Federation approach
 
-- Status: Proposed (spike evidence in `docs/spikes/2026-shell-spike-report.md`; needs independent review and owner acceptance)
+- Status: Proposed (spike evidence in `docs/spikes/2026-shell-spike-report.md`, independently reviewed 2026-10-19; needs owner acceptance and the re-verifications listed under Consequences)
 - Date: 2026-10-19
 
 ## Context
@@ -13,12 +13,15 @@ ADR-0005 chose Module Federation for module frontends. PRD-0002 asked whether it
 - **Integrity**: at registration the core copies the remote build into an immutable, content-addressed store and records SHA-384 hashes of every JavaScript file. The shell document is generated per request with a CSP nonce and an inline import map whose `integrity` section lists all registered files. Verified in Chromium: tampered entry or chunk is refused and its code does not run; a changed file in the module container after registration is not served.
 - **CSP baseline** that worked with zero violations in enforcing mode: `default-src 'none'; script-src 'self' 'nonce-<n>'; style-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; frame-src 'self'; form-action 'self'; worker-src 'none'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'`. `worker-src 'none'` is required (a module could otherwise register a service worker for its own path). `frame-ancestors 'self'` instead of `'none'` is required for the silent-renewal iframe. Keycloak is served same-origin under `/auth`.
 - Remote template requirements: an `index.html` entry (Vite needs one; it doubles as a standalone dev harness), `dts: false` (otherwise the DTS worker crashes the dev server without a `tsconfig.json`), shared entries including the `react/` and `react-dom/` prefixes, `base` set to `/modules/<id>/remote/`.
-- Proxy rules verified: response headers `Set-Cookie`, `Content-Security-Policy`, CORS and `Service-Worker-Allowed` from module containers are stripped; `X-Forwarded-*` and identity headers from clients are overwritten or dropped; `nosniff` is set.
+- Proxy rules verified on a purpose-built test location: response headers `Set-Cookie`, `Content-Security-Policy`, CORS and `Service-Worker-Allowed` from module containers are stripped; `X-Forwarded-*` is overwritten and four identity headers are dropped (a denylist); `nosniff` is set. The tests must be repeated against the production module locations with positive assertions (HTTP 404/400 and no content), and identity headers should be handled by an allowlist. Keycloak is same-origin under `/auth`; its admin and master-realm paths must not be reachable through the public listener (consider a separate origin).
 
 ## Consequences
 - The shell HTML must be produced by the core backend (nonce, import map from the registry), not by a static file server.
 - Integrity relies on import-map `integrity`; Firefox and Safari behaviour is **not verified** and must be tested before go-live (Chromium only was available).
-- CSS files are not covered by import-map integrity; stylesheets are same-origin and limited by `style-src 'self'`.
+- Import-map integrity covers only JavaScript modules that are listed in the map; anything not listed loads unverified, so the shell must treat an unlisted module file as an error and generate the map and the module list from the same registry snapshot. CSS, JSON (i18n bundles), WASM and assets fetched at runtime are not covered. Registration must restrict file types, hash all files, reject symlinks and hard links, re-verify an existing store directory, make the store read-only, switch the active version atomically and validate the entry path server-side (the spike validated it in the browser only).
+- The nonced inline import map means any HTML injection into the shell document becomes script execution: the shell must never render module-supplied HTML. `frame-ancestors 'self'` is wider than the silent-renewal iframe needs; prefer a dedicated renewal page or refresh-only renewal so the shell itself can use `'none'`, and add `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` on all locations.
+- All evidence comes from Chromium, a native nginx without HTTP/2 or compression, and Keycloak in `start-dev` mode. Header handling, CSP and integrity must be re-verified against the production Compose stack (ADR-0009), production-mode Keycloak and Firefox/Safari before this ADR is accepted.
+- Runtime `strictVersion` fails closed or open depending on load order and build; this was observed on two builds and is not a control. The remote template must pass a contract test: clean build, `dts: false`, stable callback references in SDK-provided props, no dependence on the `current` symlink in serving.
 - A compromised but correctly registered build still runs with full access in the shell origin; see ADR-0012.
 
 ## Alternatives considered
