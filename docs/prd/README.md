@@ -10,4 +10,4 @@ Decisions that shape a PRD are recorded as ADRs in [`../adr`](../adr/README.md),
 
 | PRD | Title | Status |
 |---|---|---|
-| [0001](0001-platform-core.md) | Platform core: shell, authentication, authorization, module contract | Draft |
+| [0001](0001-platform-core.md) | Platform core: shell, authentication, authorization, module contract | Reviewed |

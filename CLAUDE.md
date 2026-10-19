@@ -92,4 +92,4 @@ Window-based desktop shell (ADR-0003): modules render in shell-managed, resizabl
 
 ## Open decisions (resolve in PRD-0001 review before implementing)
 
-See "Open questions" in `docs/prd/0001-platform-core.md`: Kerberos SSO required or not, Java/Spring baseline versions, test frameworks and coverage tooling, window manager library vs. in-house, Vite Module Federation plugin maturity (spike), audit log retention, token lifetime, accessibility target, secret management/backup targets, module artifact publishing.
+PRD-0001 is reviewed and awaits owner approval. Its section 11 lists the open questions with a "needed by" milestone (Kerberos SSO, Java/Spring versions, window manager, Module Federation plugin spike, token storage, audit retention, ADR-0008 clarification, ...). Version numbers and tools named in the PRD are proposals until verified in the spike; do not treat them as decided.
