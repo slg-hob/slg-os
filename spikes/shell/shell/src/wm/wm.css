@@ -1,6 +1,6 @@
 .wm-root { display: flex; flex-direction: column; height: 100vh; }
 .wm-desk { position: relative; flex: 1 1 auto; overflow: hidden; background: var(--bs-tertiary-bg); }
-.wm-win { display: flex; flex-direction: column; overflow: hidden; }
+.wm-win { display: flex; flex-direction: column; overflow: hidden; isolation: isolate; } /* own stacking context: resize handles of a lower window must not paint over a higher window */
 .wm-win[hidden] { display: none; }
 .wm-win:focus { outline: 0; }
 .wm-win:focus-visible, .wm-active { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
@@ -19,3 +19,6 @@
 .wm-dialog { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--bs-body-bg) 80%, transparent); }
 .wm-taskbar { flex: 0 0 auto; min-height: 44px; }
 .wm-taskbar button { min-height: 32px; }
+
+/* Bootstrap's outline-secondary on tertiary backgrounds fails WCAG AA contrast (axe finding); use emphasis colours. */
+.btn-quiet { --bs-btn-color: var(--bs-emphasis-color); --bs-btn-border-color: var(--bs-border-color-translucent); --bs-btn-hover-color: var(--bs-emphasis-color); --bs-btn-hover-bg: var(--bs-secondary-bg); --bs-btn-hover-border-color: var(--bs-emphasis-color); --bs-btn-active-color: var(--bs-emphasis-color); --bs-btn-active-bg: var(--bs-secondary-bg); }

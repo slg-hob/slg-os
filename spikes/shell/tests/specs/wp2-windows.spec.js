@@ -37,7 +37,8 @@ test.describe(`WP2 acceptance (engine: ${ENGINE})`, () => {
     await page.getByTestId('window-a').locator('h1').click();
     expect((await domOrder(page)).at(-1)).toBe('a-1');
     expect(await page.locator('[data-active=true]').count()).toBe(1);
-    // close returns focus to the opener (launcher button)
+    // close returns focus to the opener (launcher button); windows overlap, so raise b first like a user would
+    await page.getByTestId('task-b-1').click();
     await page.getByTestId('close-b-1').click();
     await expect(page.getByTestId('open-b')).toBeFocused();
     // minimize moves focus to its taskbar button
@@ -385,11 +386,16 @@ test.describe(`WP2 acceptance (engine: ${ENGINE})`, () => {
     const base = await metrics();
     const rounds = [];
     for (let r = 0; r < 3; r++) {
-      for (let i = 0; i < 100; i++) {
-        await page.getByTestId('open-b').click();
-        const id = await page.evaluate(() => document.querySelector('[data-active=true]').dataset.windowId);
-        await page.getByTestId(`close-${id}`).click();
-      }
+      await page.evaluate(async () => {
+        const tick = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+        for (let i = 0; i < 100; i++) {
+          document.querySelector('[data-testid=open-b]').click();
+          await tick();
+          const id = document.querySelector('[data-active=true]').dataset.windowId;
+          document.querySelector(`[data-testid=close-${id}]`).click();
+          await tick();
+        }
+      });
       rounds.push(await metrics());
     }
     console.log(`WP2.7 leak (${ENGINE}):`, JSON.stringify({ base, rounds }));

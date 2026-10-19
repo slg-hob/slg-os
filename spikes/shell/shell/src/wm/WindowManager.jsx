@@ -246,7 +246,7 @@ export default function WindowManager({ modules, language, s, engine, renderCont
                 data-testid={`task-${w.id}`}
                 tabIndex={w.id === rovingId ? 0 : -1}
                 aria-current={w.id === state.active && w.mode !== 'min' ? 'true' : undefined}
-                className={`btn btn-sm ${w.id === state.active && w.mode !== 'min' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                className={`btn btn-sm ${w.id === state.active && w.mode !== 'min' ? 'btn-primary' : 'btn-outline-secondary btn-quiet'}`}
                 onClick={() => taskClick(w)}
               >
                 {nameOf(w)}{w.mode === 'min' && <span className="visually-hidden"> ({s.minimized})</span>}

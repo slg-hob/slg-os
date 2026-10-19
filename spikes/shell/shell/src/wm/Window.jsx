@@ -108,18 +108,18 @@ export default function Window({ win, title, s, active, narrow, engine, deskSize
     <>
       {!narrow && (
         <>
-          <button ref={menuBtn} className="btn btn-sm btn-outline-secondary wm-btn" aria-haspopup="menu" aria-expanded={menu} data-testid={`menu-${win.id}`} onClick={() => setMenu((m) => !m)}>
+          <button ref={menuBtn} className="btn btn-sm btn-outline-secondary btn-quiet wm-btn" aria-haspopup="menu" aria-expanded={menu} data-testid={`menu-${win.id}`} onClick={() => setMenu((m) => !m)}>
             <span aria-hidden="true">⋯</span><span className="visually-hidden">{s.windowMenu}</span>
           </button>
-          <button className="btn btn-sm btn-outline-secondary wm-btn" data-testid={`minimize-${win.id}`} onClick={() => dispatch({ type: 'minimize', id: win.id })}>
+          <button className="btn btn-sm btn-outline-secondary btn-quiet wm-btn" data-testid={`minimize-${win.id}`} onClick={() => dispatch({ type: 'minimize', id: win.id })}>
             <span aria-hidden="true">–</span><span className="visually-hidden">{s.minimize}</span>
           </button>
-          <button className="btn btn-sm btn-outline-secondary wm-btn" data-testid={`maximize-${win.id}`} onClick={() => dispatch({ type: win.mode === 'max' ? 'restore' : 'maximize', id: win.id })}>
+          <button className="btn btn-sm btn-outline-secondary btn-quiet wm-btn" data-testid={`maximize-${win.id}`} onClick={() => dispatch({ type: win.mode === 'max' ? 'restore' : 'maximize', id: win.id })}>
             <span aria-hidden="true">{win.mode === 'max' ? '❐' : '□'}</span><span className="visually-hidden">{win.mode === 'max' ? s.restore : s.maximize}</span>
           </button>
         </>
       )}
-      <button className="btn btn-sm btn-outline-secondary wm-btn" data-testid={`close-${win.id}`} onClick={() => onRequestClose(win.id)}>
+      <button className="btn btn-sm btn-outline-secondary btn-quiet wm-btn" data-testid={`close-${win.id}`} onClick={() => onRequestClose(win.id)}>
         <span aria-hidden="true">×</span><span className="visually-hidden">{s.closeWindow}</span>
       </button>
     </>
@@ -140,6 +140,7 @@ export default function Window({ win, title, s, active, narrow, engine, deskSize
       className={`wm-win card shadow ${active ? 'wm-active' : ''}`}
       style={engine === 'rnd' ? { position: 'absolute', inset: 0 } : { position: 'absolute', left: geo.x, top: geo.y, width: geo.w, height: geo.h }}
       onKeyDown={onKeyDown}
+      onFocus={() => { if (!active && !hidden && !inert) dispatch({ type: 'focus', id: win.id }); }} /* focus must never stay in an obscured window (WCAG 2.4.11) */
       onPointerDown={() => !active && dispatch({ type: 'focus', id: win.id })}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

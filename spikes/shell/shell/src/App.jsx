@@ -127,11 +127,11 @@ function Desktop({ auth }) {
       </ul>
       <div className="d-flex gap-2 align-items-center">
         <span className="navbar-text" data-testid="user">{auth.user.profile.preferred_username}</span>
-        <button className="btn btn-sm btn-outline-secondary" data-testid="sign-out" onClick={() => signOut()}>{s.signOut}</button>
-        <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-theme" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
+        <button className="btn btn-sm btn-outline-secondary btn-quiet" data-testid="sign-out" onClick={() => signOut()}>{s.signOut}</button>
+        <button className="btn btn-sm btn-outline-secondary btn-quiet" data-testid="toggle-theme" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
           {s.theme}: {theme === 'light' ? s.light : s.dark}
         </button>
-        <button className="btn btn-sm btn-outline-secondary" data-testid="toggle-lang" onClick={() => setLanguage(language === 'en' ? 'de' : 'en')}>
+        <button className="btn btn-sm btn-outline-secondary btn-quiet" data-testid="toggle-lang" onClick={() => setLanguage(language === 'en' ? 'de' : 'en')}>
           {s.language}: {language.toUpperCase()}
         </button>
       </div>
