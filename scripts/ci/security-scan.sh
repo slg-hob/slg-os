@@ -4,14 +4,16 @@
 set -euo pipefail
 
 path="${SCAN_PATH:-.}"
+skip_args=()
+# the deliberately vulnerable fixture is only scanned when it is the explicit target (self-test)
+if [ "$path" = "." ]; then skip_args=(--skip-dirs ci/selftest/fixtures/vulnerable-npm); fi
 ignore_args=()
 if [ -f ci/trivyignore.yaml ]; then ignore_args=(--ignorefile ci/trivyignore.yaml); fi
 
 trivy fs --quiet --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 \
-  --skip-dirs ci/selftest/fixtures/vulnerable-npm \
-  "${ignore_args[@]}" "$path"
+  "${skip_args[@]}" "${ignore_args[@]}" "$path"
 
 if [ -n "${SBOM_OUT:-}" ]; then
   trivy fs --quiet --format cyclonedx --output "$SBOM_OUT" \
-    --skip-dirs ci/selftest/fixtures/vulnerable-npm "$path"
+    "${skip_args[@]}" "$path"
 fi
