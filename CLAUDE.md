@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `slg-os` ("SLG Operating System", System Logistics) is a greenfield project in the specification phase. The repository contains documentation only (`docs/adr`, `docs/prd`, `docs/reviews`); no code or build files exist yet. **Build, lint and test commands do not exist yet.** When the project skeleton is created, add the real commands here (build, run, lint, full test run, single test, coverage) instead of guessing.
 
-Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there; start from PRD-0001), review checklists in `docs/reviews/` (use them for the independent review agents).
+Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there; start from PRD-0001), review checklists in `docs/reviews/` (use them for the independent review agents), spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`).
 
 ## What slg-os is
 
