@@ -382,7 +382,7 @@ test.describe(`WP2 acceptance (engine: ${ENGINE})`, () => {
       const m = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map((x) => [x.name, x.value]));
       return { heap: m.JSHeapUsedSize, nodes: m.Nodes, listeners: m.JSEventListeners };
     };
-    for (const id of ['b-2', 'b-3', 'b-4', 'b-5']) await page.getByTestId(`close-${id}`).click();
+    await page.evaluate(() => ['b-1', 'b-2', 'b-3', 'b-4'].forEach((id) => document.querySelector(`[data-testid=close-${id}]`).click()));
     const base = await metrics();
     const rounds = [];
     for (let r = 0; r < 3; r++) {
