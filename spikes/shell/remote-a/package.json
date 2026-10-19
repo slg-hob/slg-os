@@ -1,0 +1,17 @@
+{
+  "name": "spike-remote-a",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "vite build", "dev": "vite --port 5101" },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "spike-sdk": "file:../sdk"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "1.23.5",
+    "@vitejs/plugin-react": "^6.0.0",
+    "vite": "^8.0.0"
+  }
+}

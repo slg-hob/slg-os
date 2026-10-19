@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.certs/
+.run/
+keycloak/dist/
+test-results/
+playwright-report/

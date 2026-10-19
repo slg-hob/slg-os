@@ -1,0 +1,7 @@
+{
+  "modules": [
+    { "id": "a", "name": { "en": "Module A", "de": "Modul A" }, "version": "0.0.1", "scope": "mod_a", "entry": "/modules/a/remote/remoteEntry.js", "requires": { "react": "^19.0.0" }, "instanceMode": "singleton" },
+    { "id": "b", "name": { "en": "Module B", "de": "Modul B" }, "version": "0.0.1", "scope": "mod_b", "entry": "/modules/b/remote/remoteEntry.js", "requires": { "react": "^19.0.0" }, "instanceMode": "singleton" },
+    { "id": "mismatch", "name": { "en": "Mismatch module", "de": "Abweichendes Modul" }, "version": "0.0.1", "scope": "mod_mismatch", "entry": "/modules/mismatch/remote/remoteEntry.js", "requires": { "react": "^18.0.0" }, "instanceMode": "singleton" }
+  ]
+}
