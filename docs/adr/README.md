@@ -15,7 +15,7 @@ One file per significant architecture decision, numbered sequentially (`NNNN-sho
 | [0009](0009-deployment-scale.md) | Single-server Docker Compose deployment | Accepted |
 | [0010](0010-module-federation-approach.md) | Module Federation approach | Proposed |
 | [0011](0011-window-manager.md) | Window manager | Proposed |
-| [0012](0012-browser-token-handling.md) | Browser token handling for federated remotes | Proposed, owner decision required |
+| [0012](0012-browser-token-handling.md) | Browser token handling for federated remotes | Accepted |
 
 ## Template
 
