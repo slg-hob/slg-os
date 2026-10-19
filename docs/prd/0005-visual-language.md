@@ -1,6 +1,6 @@
 # PRD-0005: Visual language and design system
 
-- Status: Reviewed (four independent reviews integrated, awaiting owner approval; owner interview decisions of 2026-10-19 applied)
+- Status: **Approved** by the owner on 2026-10-19 (independently reviewed by requirements, security, UI/UX and operations agents; owner interview decisions applied)
 - Owner: Benjamin Honauer
 - Date: 2026-10-19
 - Related ADRs: 0003 (window-based desktop UI), 0005 (Module Federation), 0010 and 0011 (proposed), 0012; new ADRs written during this phase: section 7.5 (numbered from 0023)
@@ -284,3 +284,5 @@ Resolutions where reviews differed or the author chose:
 Not verifiable before implementation: the `tnum` feature in the shipped Source Sans 3 files, glass performance on weaker office PCs (no reference PC exists), `prefers-reduced-transparency` behaviour in current browsers, Keycloak 26.8 theme and header settings, whether Bootstrap's Sass variables cover all derived values, and the real wallpaper luminance range.
 
 Owner interview 2026-10-19 (after the reviews): Q48 product mark designed in the project; Q49 Source Sans 3; Q50 postponed; Q51 pill shapes yes; Q52 built-in wallpapers; Q55 no office reference PC; Q56 the owner is the only design reviewer; Q58 no works-council or DPO step for the usability study. The author recorded the consequences: a throttled-profile proxy for performance, conservative guard defaults, and the independent design review as residual risk.
+
+Owner approval 2026-10-19. Open after approval: Q50 (usability test departments, before V3), Q53, Q54, Q57. PRD-0001 revision 3 (C1 to C33) follows.

@@ -30,7 +30,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 - Alerts in the admin overview, backup of the module store, health aggregation.
 
 ## Visual language and design system (planned, after the skeleton)
-- [PRD-0005](docs/prd/0005-visual-language.md) (reviewed, awaiting approval): owner chose direction C "Soft glass" on 2026-10-19 (milestones V1, V2, V3a-c, V4 to V7).
+- [PRD-0005](docs/prd/0005-visual-language.md) (approved 2026-10-19): owner chose direction C "Soft glass" on 2026-10-19 (milestones V1, V2, V3a-c, V4 to V7).
 - Own PRD: visual language, tokens, typography, iconography, desktop metaphor (start menu, desktop icons, tray), window chrome, motion.
 - Interactive prototypes for review, visual regression tests, usability test with users from two departments. ◆ design direction and sign-off by the owner (ideally with a person with design experience).
 - Fixes found in the spike screenshots: layout with banners, overlapping window controls, dark theme polish.
