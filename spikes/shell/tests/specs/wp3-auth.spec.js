@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { trackCsp, cspViolations } from './helpers.js';
+import { secret } from '../global-setup.js';
 
 const decode = (jwt) => JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
 
@@ -102,13 +103,16 @@ test.describe('WP3 auth thin slice (alice = finance, bob = ops)', () => {
     expect(out.third).toBe(400); // rotated token is single use
   });
 
-  test('WP3.2 sign-out ends the session: a reload requires login again', async ({ browser }) => {
-    const ctx = await browser.newContext({ storageState: '.auth/alice.json', ignoreHTTPSErrors: true });
+  test('WP3.2 sign-out ends the session: a reload requires login again (own login, so shared sessions stay intact)', async ({ browser }) => {
+    const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] }, ignoreHTTPSErrors: true });
     const page = await ctx.newPage();
     await page.goto('/');
+    await page.locator('#username').fill('alice');
+    await page.locator('#password').fill(secret('ALICE'));
+    await page.locator('#kc-login').click();
     await expect(page.getByTestId('user')).toHaveText('alice');
     await page.getByTestId('sign-out').click();
-    await page.waitForURL(/protocol\/openid-connect\/(logout|auth)|\/auth\/realms\/slg/, { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('networkidle');
     await page.goto('/');
     await expect(page.locator('#username')).toBeVisible({ timeout: 15000 });
     await ctx.close();
