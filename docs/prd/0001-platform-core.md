@@ -1,6 +1,6 @@
 # PRD-0001: Platform core: shell, authentication, authorization, module contract
 
-- Status: **Approved** by the owner on 2026-10-19 (revision 2, independently reviewed by requirements, security, UI/UX and operations agents). **Revision 3** (2026-10-19) folds in the decisions of the owner interviews and the consistency notes C1 to C33 of PRD-0003, PRD-0004 and PRD-0005 (section 12); it is editorial and consequential, no goal changes; the owner confirms it with the merge of its pull request. Items marked "proposed" were confirmed or closed by the skeleton PRD.
+- Status: **Approved** by the owner on 2026-10-19 (revision 2, independently reviewed by requirements, security, UI/UX and operations agents). **Revision 3** (2026-10-19) folds in the decisions of the owner interviews and the consistency notes C1 to C33 of PRD-0003, PRD-0004 and PRD-0005 (section 12); it is editorial and consequential, no goal changes; **approved by the owner on 2026-10-19**. Items marked "proposed" were confirmed or closed by the skeleton PRD.
 - Owner: Benjamin Honauer
 - Date: 2026-10-19
 - Related ADRs: 0001-0012 (0010 and 0011 are proposed, 0012 is accepted)
