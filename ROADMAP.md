@@ -55,6 +55,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 | Q27 Keycloak host name, certificates, internal back-channel route | phase 1a | owner |
 | Q28 confirm PostgreSQL session store | phase 1a | platform team |
 | Q30 SMTP relay for alerts | deferred | owner |
+| Enable branch protection on `main` ([instructions](docs/branch-protection.md)) | now | owner |
 
 ## Main risks
 - Visual quality is not yet specified or designed; it is planned after the skeleton and needs an owner decision on direction and review capacity.
