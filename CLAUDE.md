@@ -32,26 +32,32 @@ Modules are added incrementally and lightly: registering a module and assigning 
 
 ### Working agreement: how requests are handled
 - A request for a PRD or an implementation starts the matching workflow below and runs it **to the end without asking for confirmation of intermediate steps**: drafting, review agents, integrating findings, tests, commits and pushes to the work branch. Do not ask "should I start the review?" or "shall I continue?".
-- Ask the owner only (1) for a decision that cannot be derived from PRDs, ADRs and this file and that has real consequences, **collected into one interview at the start** (non-blocking questions go into the PRD as open questions instead), and (2) at the **final gate**: one confirmation per deliverable to merge to `main` (fast-forward) and, for PRDs, to approve it. If the owner says to merge directly, merge without the extra question.
+- Ask the owner only (1) for a decision that cannot be derived from PRDs, ADRs and this file and that has real consequences, **collected into one interview at the start** (non-blocking questions go into the PRD as open questions instead), and (2) at the **final gate**: PRDs, ADRs and design decisions need the owner's approval (a comment on the pull request or a message in the chat); all other pull requests are merged by Claude as soon as the CI gate is green and the review findings are integrated, without further questions.
 - Finish with one short report: what was done, what the author decided where reviews differed, what needs the owner. No step-by-step narration.
-- Shortcuts: `/prd <topic>` and `/implement <PRD>` run the workflows (project skills in `.claude/skills/`).
+- Shortcuts: `/prd <topic>` and `/implement <PRD>` run the workflows (project skills in `.claude/skills/`); both end with a pull request.
 
-### Git rules
-- Work on a branch `claude/<topic>`; commit messages in English; stage explicit paths, never `git add -A` where ignored build output or spike files could become untracked; never commit secrets or files over 50 MB. Spike code stays on branch `spike/shell`.
-- Push after each workflow step. If the stop hook reports unpushed commits, verify with `git ls-remote origin <branch>` and push only if the remote really lacks the commit.
+### Git rules: feature branch, pull request, CI gate
+- **Every change goes through a feature branch `claude/<topic>` and a pull request into `main`.** Never push to `main` directly (the only exception is the owner explicitly ordering it for a single change).
+- **The CI check `gate` must be green before a pull request is merged.** Branch protection on `main` enforces this (pull request required, required check `gate`, no force pushes). Merge with a squash commit; delete the branch afterwards. A red gate is fixed on the branch, never bypassed.
+- Open the pull request early (draft) and push after each workflow step; fill in `.github/pull_request_template.md`; list the independent review resolutions in the description.
+- Commit messages in English; stage explicit paths, never `git add -A` where ignored build output or spike files could become untracked; never commit secrets or files over 50 MB. Spike code stays on branch `spike/shell` and is never merged.
+- If the stop hook reports unpushed commits, verify with `git ls-remote origin <branch>` and push only if the remote really lacks the commit.
+
+### CI quality gate
+`.github/workflows/ci.yml` runs on every pull request and on `main`; the job `gate` aggregates the required jobs. Today: documentation checks (ADR and PRD indices and status lines, relative links, file size, secret patterns via `scripts/ci/check-docs.mjs`; markdownlint). With the walking skeleton the gate is extended, and a pull request must not weaken it: backend and frontend builds, unit and integration tests with the coverage gates of PRD-0001 NFR-2 (>= 80 %, >= 90 % for gateway, session and security), i18n key parity de/en and a no-literal-string lint, E2E on the real stack in Chromium, Firefox and WebKit with axe checks, dependency/image/secret scanning. Run the same checks locally before pushing where possible.
 
 ### Specification workflow
 1. Draft the PRD from `docs/prd/TEMPLATE.md` in English (number and file name from the index in `docs/prd/README.md`).
 2. Start independent review agents (fresh context, in parallel, they must not edit the PRD) for at least: requirements completeness and consistency, security, UI/UX and accessibility, operations and testability (add permissions or data protection where relevant). Each writes findings with severity and ready-to-paste text into the scratchpad; use `docs/reviews/spec-review-checklist.md`.
 3. Integrate the findings into the PRD, resolve conflicts between reviews and write the decision into the PRD's review log, update the indices (`docs/prd/README.md`, `ROADMAP.md`), push.
-4. Report. After the owner approves, set the status to Approved and merge.
+4. Report. After the owner approves, set the status to Approved and merge the pull request.
 
 ### Implementation workflow
 1. Implement the requirement from an approved PRD. **Code, identifiers, comments and commit messages are English.**
 2. **UI/UX is bilingual (German / English) from the start, strictly via i18n.** No hard-coded user-visible strings, in the shell or in any module. Missing translation keys in either language are a defect.
 3. Implement tests. **Global test coverage must be >= 80 %**, enforced in the build (fail the build below the threshold); details per PRD-0001 NFR-2.
 4. Start independent review agents (same rules as above, perspectives: requirements completeness, security, UI/UX, test coverage, operations as relevant; `docs/reviews/implementation-review-checklist.md`); integrate and correct the implementation, rerun tests, push.
-5. Report with test results; update `ROADMAP.md` and the commands section of this file when the build tooling changes.
+5. Report with test results; update `ROADMAP.md` and the commands section of this file when the build tooling changes. Merge the pull request when the gate is green.
 
 "Independent" means the reviewer is a separate agent (fresh context), not the one that wrote the artifact.
 

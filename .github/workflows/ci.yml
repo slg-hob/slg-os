@@ -1,0 +1,49 @@
+name: CI
+
+# Quality gate for every change to main. Branch protection requires the single check "gate".
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Documentation checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Index, status, link, size and secret checks
+        run: node scripts/ci/check-docs.mjs
+      - name: Markdown structure
+        run: npx --yes markdownlint-cli2@0.23.3 "**/*.md"
+
+  # Added with the walking skeleton (PRD for phase 1a), see ROADMAP.md and CLAUDE.md:
+  #   backend:   Maven build, unit and integration tests, JaCoCo line coverage >= 80 % (>= 90 % for gateway, session, security)
+  #   frontend:  lint, type check, Vitest with coverage >= 80 %, i18n key parity de/en, no-literal-string lint
+  #   e2e:       compose stack with production-mode Keycloak, Playwright (Chromium, Firefox, WebKit), axe checks
+  #   security:  dependency and image scanning, secret scan, SBOM
+
+  gate:
+    name: gate
+    if: always()
+    needs: [docs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All required jobs succeeded
+        run: |
+          echo '${{ toJSON(needs) }}'
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "A required job failed"; exit 1
+          fi

@@ -25,4 +25,4 @@ SLG Operating System: a locally hosted, web-based platform with an OS-like deskt
 
 ## Workflow in short
 
-PRD draft, independent multi-perspective review, implementation, tests (global coverage >= 80 %), independent multi-perspective review. Code and PRDs in English, UI strictly bilingual (German/English) via i18n.
+PRD draft, independent multi-perspective review, implementation, tests (global coverage >= 80 %), independent multi-perspective review. Every change goes through a feature branch and a pull request; the CI check `gate` must be green before merge to `main`. Code and PRDs in English, UI strictly bilingual (German/English) via i18n.
