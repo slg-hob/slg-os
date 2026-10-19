@@ -17,6 +17,7 @@ http {
 
   server {
     listen 8443 ssl;
+    listen 8081;   # plain http on localhost: needed because service workers are refused under the self-signed certificate
     server_name localhost;
     ssl_certificate @ROOT@/.certs/localhost.crt;
     ssl_certificate_key @ROOT@/.certs/localhost.key;
@@ -68,8 +69,25 @@ http {
       alias @ROOT@/.run/store/mismatch/current/;
     }
 
+    # Hostile module container behind the proxy (WP1.11): headers modules must not control are stripped.
+    location /modules/evil/ {
+      proxy_pass http://127.0.0.1:5201;
+      proxy_hide_header Set-Cookie;
+      proxy_hide_header Content-Security-Policy;
+      proxy_hide_header Content-Security-Policy-Report-Only;
+      proxy_hide_header Access-Control-Allow-Origin;
+      proxy_hide_header Access-Control-Allow-Credentials;
+      proxy_hide_header Service-Worker-Allowed;
+      add_header X-Content-Type-Options nosniff always;
+    }
+
     location /api/stub/ {
       proxy_pass http://127.0.0.1:5300/;
+      # Identity must come from validated tokens, never from client-supplied headers (8.5).
+      proxy_set_header X-User "";
+      proxy_set_header X-Remote-User "";
+      proxy_set_header X-Forwarded-User "";
+      proxy_set_header X-Auth-User "";
       proxy_set_header X-Forwarded-For $remote_addr;
       proxy_set_header X-Forwarded-Proto https;
       proxy_set_header X-Forwarded-Host $host;

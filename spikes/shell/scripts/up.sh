@@ -6,9 +6,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export CSP_MODE="${CSP_MODE:-enforce}"
 "$ROOT/scripts/down.sh" >/dev/null 2>&1 || true
 mkdir -p "$ROOT/.run"
+rm -f "$ROOT/.run/svc.pids"
 node "$ROOT/scripts/register.mjs"
 nohup node "$ROOT/scripts/shell-server.mjs" > "$ROOT/.run/shell-server.log" 2>&1 &
 echo $! > "$ROOT/.run/shell-server.pid"
+for svc in evil-upstream stub-server; do
+  nohup node "$ROOT/scripts/$svc.mjs" > "$ROOT/.run/$svc.log" 2>&1 &
+  echo $! >> "$ROOT/.run/svc.pids"
+done
 "$ROOT/scripts/proxy.sh" start
 sleep 1
 curl -sk -o /dev/null -w "shell: %{http_code}\n" https://localhost:8443/
