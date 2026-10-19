@@ -10,7 +10,7 @@ Decisions that shape a PRD are recorded as ADRs in [`../adr`](../adr/README.md),
 
 | PRD | Title | Status |
 |---|---|---|
-| [0001](0001-platform-core.md) | Platform core: shell, authentication, authorization, module contract | Approved (revision 2) |
+| [0001](0001-platform-core.md) | Platform core: shell, authentication, authorization, module contract | Approved (revision 2); revision 3 under review |
 | [0002](0002-shell-spike.md) | Technical spike: Module Federation and window manager | Reviewed |
 | [0003](0003-walking-skeleton.md) | Walking skeleton (phase 1a) | Approved |
 | [0004](0004-platform-capabilities.md) | Platform capabilities (phase 1b) | Approved |
