@@ -36,6 +36,8 @@ jobs:
       - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
         with:
           version: ${{ env.TRIVY_VERSION }}
+      - name: Populate the local Maven repository for the scanner
+        run: ./mvnw -q dependency:resolve
       - name: Install frontend dependencies
         run: npm ci --ignore-scripts
         working-directory: frontend

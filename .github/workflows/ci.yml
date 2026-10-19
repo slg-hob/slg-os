@@ -205,6 +205,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+      - name: Populate the local Maven repository (the scanner resolves versions from it, not from Maven Central)
+        run: ./mvnw -q dependency:resolve
       - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
         with:
           version: ${{ env.TRIVY_VERSION }}
