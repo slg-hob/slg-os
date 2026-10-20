@@ -124,6 +124,33 @@ jobs:
           path: coverage-frontend.json
           retention-days: 3
 
+  design:
+    name: Design tokens (sync, contrast, assets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install (lock file only, no scripts)
+        run: npm ci --ignore-scripts
+      - name: tokens-sync (generated files equal the output of the generator)
+        run: npm run tokens:check
+      - name: Contrast of every declared token pair (light, dark, high contrast, glass extremes)
+        run: npm run contrast
+      - name: Asset hashes, licences and third-party notices
+        run: npm run assets:check
+      - name: Stylesheet builds (Bootstrap from SCSS), no data or network URLs, gzip budget
+        run: npm run build -w @slg-os/design-system
+
   coverage:
     name: Coverage regression (2-point limit)
     needs: [backend, frontend]
@@ -269,7 +296,7 @@ jobs:
   gate:
     name: gate
     if: always()
-    needs: [docs, policy, backend, frontend, coverage, e2e, security, compose-config]
+    needs: [docs, policy, backend, frontend, design, coverage, e2e, security, compose-config]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -282,5 +309,5 @@ jobs:
       - name: Every required job must have succeeded (skipped counts as failure)
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
-          REQUIRED_JOBS: docs,policy,backend,frontend,coverage,e2e,security,compose-config
+          REQUIRED_JOBS: docs,policy,backend,frontend,design,coverage,e2e,security,compose-config
         run: node scripts/ci/gate.mjs

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `slg-os` ("SLG Operating System", System Logistics) is in its implementation phase. The specification is complete (PRD-0001 to PRD-0005, ADR-0001 to ADR-0013). The repository contains the build and CI foundation of milestone M1 (PRD-0003): a Maven multi-module backend, an npm workspace frontend, the CI quality gate and its scripts. Features follow milestone by milestone (`ROADMAP.md`).
 
-Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there), review checklists in `docs/reviews/` (use them for the independent review agents), the plan in `ROADMAP.md`, spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`). The pinned toolchain versions are in `docs/adr/0013-toolchain.md`, generated from `docs/adr/0013-versions.json`.
+Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there), review checklists in `docs/reviews/` (use them for the independent review agents), the plan in `ROADMAP.md`, spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`). The pinned toolchain versions are in `docs/adr/0013-toolchain.md`, generated from `docs/adr/0013-versions.json`. The design tokens are the JSON files in `design/` (PRD-0005, ADR-0023); never edit `frontend/design-system/src/generated/` by hand, change the source and run `npm run tokens:generate`.
 
 ## What slg-os is
 
@@ -46,6 +46,10 @@ npm run typecheck && npm run i18n:check         # TypeScript, de/en key parity a
 npm run test:coverage                           # Vitest with coverage gate (80 % lines per package)
 npm run test -w @slg-os/shell -- src/App.test.tsx   # a single test file
 npm run build
+npm run tokens:generate                         # design tokens (design/tokens/*.json) -> design-system/src/generated/ (commit the result)
+npm run tokens:check && npm run contrast        # tokens-sync (also fails on an unmapped var(--bs-*) in shell/design-system) and the contrast check (CI job design)
+npm run assets:check                            # docs/design/assets.lock: hashes, licence allowlist, THIRD-PARTY-NOTICES
+npm run lint:css                                # Stylelint (part of npm run lint)
 
 # CI scripts and checks (no dependencies)
 node --test "scripts/ci/test/*.test.mjs"        # unit tests of the CI scripts

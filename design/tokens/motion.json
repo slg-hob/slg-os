@@ -1,0 +1,7 @@
+[
+  { "name": "duration-fast", "value": "120ms", "usage": "Hover, tab highlight, toast enter." },
+  { "name": "duration-base", "value": "200ms", "usage": "Default transition." },
+  { "name": "duration-slow", "value": "320ms", "usage": "Menus and window open and close only." },
+  { "name": "easing-standard", "value": "cubic-bezier(0.2, 0, 0, 1)", "usage": "Entering and moving elements." },
+  { "name": "easing-exit", "value": "cubic-bezier(0.4, 0, 1, 1)", "usage": "Leaving elements." }
+]

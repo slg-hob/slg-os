@@ -1,0 +1,8 @@
+# Files that are compared byte for byte (generated token files) or hashed (assets.lock) keep LF line endings on every machine.
+/design/** text eol=lf
+/frontend/design-system/src/generated/** text eol=lf
+/frontend/design-system/src/styles/** text eol=lf
+/frontend/design-tools/test-fixtures/** text eol=lf
+/docs/design/** text eol=lf
+/THIRD-PARTY-NOTICES text eol=lf
+*.woff2 binary

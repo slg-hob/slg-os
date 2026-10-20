@@ -1,0 +1,13 @@
+diff --git a/design/tokens/color.json b/design/tokens/color.json
+index 942208c..7be8381 100644
+--- a/design/tokens/color.json
++++ b/design/tokens/color.json
+@@ -9,7 +9,7 @@
+   { "name": "divider", "light": "#b3b3b3", "dark": "#666666", "lightHc": "#737373", "darkHc": "#9a9a9a", "forced": "CanvasText", "usage": "Hairlines and the border of an inactive window (at least 1.5:1 against the backdrop)." },
+   { "name": "control-border", "light": "#737373", "dark": "#9a9a9a", "lightHc": "#595959", "darkHc": "#bfbfbf", "forced": "CanvasText", "usage": "Boundary of inputs, checkboxes and other controls (3:1 against the surface)." },
+   { "name": "ink-strong", "light": "#262626", "dark": "#f2f2f2", "forced": "CanvasText", "usage": "Primary text; the only colour allowed directly on glass." },
+-  { "name": "ink-muted", "light": "#595959", "dark": "#bfbfbf", "lightHc": "#262626", "darkHc": "#f2f2f2", "forced": "CanvasText", "usage": "Secondary text on solid surfaces only." },
++  { "name": "ink-muted", "light": "#8c8c8c", "dark": "#bfbfbf", "lightHc": "#262626", "darkHc": "#f2f2f2", "forced": "CanvasText", "usage": "Secondary text on solid surfaces only." },
+   { "name": "link", "light": "#00729c", "dark": "#66cef5", "lightHc": "#005a7d", "darkHc": "#8fdcfb", "forced": "LinkText", "usage": "Text in the brand hue and links; links in running text are underlined." },
+   { "name": "focus-ring", "light": "#00729c", "dark": "#66cef5", "lightHc": "#005a7d", "darkHc": "#8fdcfb", "forced": "Highlight", "usage": "Focus indicator of every component; never the primary colour." },
+   { "name": "primary", "light": "#00aeef", "dark": "#00aeef", "forced": "ButtonFace", "usage": "Brand colour, fill of primary buttons (not a required boundary, Q57)." },

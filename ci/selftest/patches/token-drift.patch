@@ -1,0 +1,11 @@
+diff --git a/design/tokens/space.json b/design/tokens/space.json
+index e3baebd..ea45960 100644
+--- a/design/tokens/space.json
++++ b/design/tokens/space.json
+@@ -5,5 +5,5 @@
+   { "name": "space-4", "px": 16, "usage": "Default padding and gutters." },
+   { "name": "space-5", "px": 24, "usage": "Section spacing." },
+   { "name": "space-6", "px": 32, "usage": "Large gaps." },
+-  { "name": "space-7", "px": 48, "usage": "Page-level spacing." }
++  { "name": "space-7", "px": 52, "usage": "Page-level spacing." }
+ ]

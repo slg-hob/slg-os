@@ -11,6 +11,14 @@
 /docs/adr/0013-versions.json      @slg-hob
 /deploy/                          @slg-hob
 /design/                          @slg-hob
+/docs/design/assets.lock          @slg-hob
+/THIRD-PARTY-NOTICES              @slg-hob
+/frontend/design-tools/           @slg-hob
+/frontend/eslint-config/          @slg-hob
+/frontend/stylelint-config/       @slg-hob
+/frontend/stylelint.config.mjs    @slg-hob
+/frontend/design-system/src/generated/ @slg-hob
+/ci/trivyignore.yaml              @slg-hob
 /mvnw                             @slg-hob
 /mvnw.cmd                         @slg-hob
 /backend/*/pom.xml                @slg-hob

@@ -1,0 +1,16 @@
+[
+  { "kind": "family", "name": "font-sans", "value": "\"Source Sans 3 Variable\", \"Source Sans 3\", \"Segoe UI\", system-ui, -apple-system, sans-serif", "usage": "Interface and running text. Source Sans 3 is self-hosted (ADR-0023, VL-3); the stack falls back to system fonts." },
+  { "kind": "family", "name": "font-mono", "value": "ui-monospace, \"Cascadia Mono\", Consolas, \"Liberation Mono\", monospace", "usage": "Identifiers, code and IDs." },
+  { "kind": "scale", "name": "display", "size": 32, "lineHeight": 44, "weight": 300, "usage": "Headline of pre-session pages." },
+  { "kind": "scale", "name": "page-title", "size": 24, "lineHeight": 33, "weight": 300, "usage": "Page title." },
+  { "kind": "scale", "name": "section", "size": 20, "lineHeight": 28, "weight": 300, "usage": "Section heading and dialog title." },
+  { "kind": "scale", "name": "title-chrome", "size": 14, "lineHeight": 20, "weight": 600, "usage": "Window and chrome titles." },
+  { "kind": "scale", "name": "title-card", "size": 16, "lineHeight": 22, "weight": 600, "usage": "Card titles in content." },
+  { "kind": "scale", "name": "body", "size": 16, "lineHeight": 24, "weight": 400, "usage": "Running text." },
+  { "kind": "scale", "name": "body-strong", "size": 16, "lineHeight": 24, "weight": 600, "usage": "Emphasis in running text." },
+  { "kind": "scale", "name": "table", "size": 14, "lineHeight": 20, "weight": 400, "usage": "Dense contexts such as tables." },
+  { "kind": "scale", "name": "button", "size": 14, "lineHeight": 20, "weight": 600, "usage": "Button labels." },
+  { "kind": "scale", "name": "label", "size": 13, "lineHeight": 16, "weight": 600, "usage": "Form labels and tile labels." },
+  { "kind": "scale", "name": "caption", "size": 13, "lineHeight": 18, "weight": 400, "usage": "Captions and helper text." },
+  { "kind": "scale", "name": "mono", "size": 14, "lineHeight": 20, "weight": 400, "usage": "Monospace text." }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "ink-on-paper",
+    "foreground": "--slg-ink",
+    "background": "--slg-paper",
+    "role": "text",
+    "threshold": 4.5
+  },
+  {
+    "id": "ink-on-pane",
+    "foreground": "--slg-ink",
+    "background": "--slg-pane",
+    "role": "text",
+    "threshold": 4.5,
+    "over": [
+      "black",
+      "white"
+    ]
+  },
+  {
+    "id": "bs-body",
+    "foreground": "--slg-ink",
+    "background": "--slg-paper",
+    "role": "text",
+    "threshold": 4.5
+  }
+]

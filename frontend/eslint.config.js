@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import i18next from 'eslint-plugin-i18next';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
+import { moduleDesignRules } from '@slg-os/eslint-config';
 
 /**
  * Lint rules of the frontend workspace (PRD-0003 SK-2 AC1): no literal user-visible strings in markup,
@@ -60,8 +61,17 @@ export default tseslint.config(
       'no-restricted-syntax': ['error', ...literalTextSelectors],
     },
   },
+  // Module code inherits the look through tokens and components only (PRD-0005 VL-5 AC3). The same rule key is used
+  // by the literal-string check above, so its selectors are merged in.
+  moduleDesignRules({ files: ['reference-module/src/**/*.{ts,tsx}'], extraRestrictedSyntax: literalTextSelectors }),
   {
-    files: ['tools/**/*.mjs', '*.js'],
-    languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
+    files: ['tools/**/*.mjs', '*.js', '*.mjs', '*/src/**/*.mjs', '*/bin/**/*.mjs'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly', Buffer: 'readonly', structuredClone: 'readonly' } },
+  },
+  {
+    files: ['*/src/**/*.test.mjs'],
+    languageOptions: {
+      globals: Object.fromEntries(['describe', 'it', 'expect', 'vi', 'beforeAll', 'afterAll', 'beforeEach', 'afterEach'].map((name) => [name, 'readonly'])),
+    },
   },
 );

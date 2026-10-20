@@ -1,0 +1,14 @@
+{
+  "name": "@slg-os/stylelint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Stylelint rules for module and platform CSS: tokens only (PRD-0005 VL-5 AC3).",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  }
+}
