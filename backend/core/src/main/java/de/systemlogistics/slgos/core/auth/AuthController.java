@@ -8,6 +8,7 @@ import de.systemlogistics.slgos.core.config.SlgProperties;
 import de.systemlogistics.slgos.core.health.OidcAvailability;
 import de.systemlogistics.slgos.core.security.ClientIp;
 import de.systemlogistics.slgos.core.security.CsrfTokens;
+import de.systemlogistics.slgos.core.security.Logs;
 import de.systemlogistics.slgos.core.security.RateLimiter;
 import de.systemlogistics.slgos.core.security.ReturnTarget;
 import de.systemlogistics.slgos.core.security.oidc.IdTokenClaims;
@@ -31,7 +32,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -69,7 +69,6 @@ class AuthController {
     private final PageResponses pages;
     private final RateLimiter limiter;
     private final String shellBase;
-    private final ConcurrentHashMap<String, Instant> consumedStates = new ConcurrentHashMap<>();
 
     AuthController(SlgProperties properties, OidcClient oidc, IdTokenValidator idTokens, LogoutTokenValidator logoutTokens,
             SessionService sessions, CsrfTokens signer, ClientIp clientIp, Clock clock, AuditService audit,
@@ -127,8 +126,7 @@ class AuthController {
         }
         Instant now = clock.instant();
         Optional<LoginState> stored = LoginState.read(request, signer, now);
-        if (stored.isEmpty() || error != null || code == null || state == null || !sameValue(stored.get().state(), state)
-                || consumed(state, now)) {
+        if (stored.isEmpty() || error != null || code == null || state == null || !sameValue(stored.get().state(), state)) {
             return pages.page(HttpStatus.BAD_REQUEST, Page.CALLBACK_ERROR, request, null, clearLogin);
         }
         LoginState login = stored.get();
@@ -147,15 +145,25 @@ class AuthController {
             return pages.page(HttpStatus.BAD_REQUEST, Page.CALLBACK_ERROR, request, null, clearLogin);
         }
         String ip = clientIp.of(request);
-        if (login.stepUp() && !stepUpFresh(claims, now, ip)) {
-            return pages.page(HttpStatus.BAD_REQUEST, Page.CALLBACK_ERROR, request, null, clearLogin);
+        try {
+            // Marked only after a successful exchange, in the database, so a replay on any container fails and a login that
+            // failed on the way is not burned.
+            if (!sessions.markLoginStateUsed(login.state())) {
+                return pages.page(HttpStatus.BAD_REQUEST, Page.CALLBACK_ERROR, request, null, clearLogin);
+            }
+            if (login.stepUp() && !stepUpFresh(claims, login, now, ip)) {
+                return pages.page(HttpStatus.BAD_REQUEST, Page.CALLBACK_ERROR, request, null, clearLogin);
+            }
+            replacePreviousSession(request, claims.subject());
+            SessionService.Created created = sessions.create(new SessionService.Login(claims.subject(), claims.sessionId(),
+                    claims.displayName(), claims.locale(), claims.groups(), claims.authTime(), tokens.accessToken(),
+                    tokens.refreshToken(), tokens.idToken(), tokens.expiresInSeconds()), ip);
+            return pages.page(HttpStatus.OK, Page.INTERSTITIAL, request, login.target(), clearLogin,
+                    SessionCookie.issue(created.cookieValue()));
+        } catch (DataAccessException | TransactionException e) {
+            LOG.error("session store unavailable during sign-in: {}", Logs.safe(e));
+            return pages.page(HttpStatus.SERVICE_UNAVAILABLE, Page.SIGN_IN_UNAVAILABLE, request, null, clearLogin);
         }
-        discardPreviousSession(request);
-        SessionService.Created created = sessions.create(new SessionService.Login(claims.subject(), claims.sessionId(),
-                claims.displayName(), claims.locale(), claims.groups(), claims.authTime(), tokens.accessToken(),
-                tokens.refreshToken(), tokens.idToken(), tokens.expiresInSeconds()), ip);
-        return pages.page(HttpStatus.OK, Page.INTERSTITIAL, request, login.target(), clearLogin,
-                SessionCookie.issue(created.cookieValue()));
     }
 
     /**
@@ -165,7 +173,14 @@ class AuthController {
     @PostMapping("/core/auth/logout")
     ResponseEntity<?> logout(HttpServletRequest request) {
         SessionRecord session = SessionContext.of(request).session();
-        String idToken = sessions.idToken(session);
+        String idToken;
+        try {
+            idToken = sessions.idToken(session);
+        } catch (IllegalStateException e) {
+            // The stored token cannot be decrypted (retired key): sign out without the hint rather than failing.
+            LOG.warn("stored ID token unreadable at sign-out");
+            idToken = null;
+        }
         sessions.logout(session, clientIp.of(request));
         String signedOut = shellBase + "/core/auth/signed-out";
         String target = idToken == null ? signedOut : oidc.endSessionUri(idToken, signedOut).toString();
@@ -212,31 +227,38 @@ class AuthController {
                 return ResponseEntity.badRequest().header(HttpHeaders.CACHE_CONTROL, "no-store").build();
             }
         } catch (DataAccessException | TransactionException e) {
-            LOG.error("session store unavailable during back-channel logout", e);
+            LOG.error("session store unavailable during back-channel logout: {}", Logs.safe(e));
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).header(HttpHeaders.CACHE_CONTROL, "no-store").build();
         }
         return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").build();
     }
 
-    private boolean stepUpFresh(IdTokenClaims claims, Instant now, String ip) {
+    /** The authentication must be recent and must not be older than the login request that demanded it. */
+    private boolean stepUpFresh(IdTokenClaims claims, LoginState login, Instant now, String ip) {
         boolean fresh = claims.authTime() != null
-                && claims.authTime().plus(properties.session().stepUpMaxAge()).isAfter(now);
+                && claims.authTime().plus(properties.session().stepUpMaxAge()).isAfter(now)
+                && !claims.authTime().isBefore(login.issuedAt().minusSeconds(5));
         audit.record(new AuditEvent(AuditTypes.STEP_UP, claims.subject(), ip, null,
                 fresh ? AuditEvent.Outcome.SUCCESS : AuditEvent.Outcome.FAILURE, null));
         return fresh;
     }
 
-    /** A new login replaces the session of the same browser; the old row is removed without a second audit entry. */
-    private void discardPreviousSession(HttpServletRequest request) {
+    /**
+     * A new login replaces the session of the same browser. The same user's old row is removed without a second audit entry;
+     * a different user's session is ended with an audit entry, because it did not end by its owner's decision.
+     */
+    private void replacePreviousSession(HttpServletRequest request, String newSubject) {
         String cookie = SessionCookie.read(request);
-        if (cookie != null) {
-            sessions.resolve(cookie).ifPresent(sessions::discard);
+        if (cookie == null) {
+            return;
         }
-    }
-
-    private boolean consumed(String state, Instant now) {
-        consumedStates.values().removeIf(t -> t.plus(LoginState.LIFETIME).isBefore(now));
-        return consumedStates.putIfAbsent(state, now) != null;
+        sessions.resolve(cookie).ifPresent(old -> {
+            if (old.userId().equals(newSubject)) {
+                sessions.discard(old);
+            } else {
+                sessions.terminate(old, AuditTypes.REPLACED);
+            }
+        });
     }
 
     private static boolean sameValue(String a, String b) {

@@ -82,6 +82,9 @@ class CsrfTest {
         assertThat(policy.accepts(post("https://shell.slg.test:8443", token, null), tokens, SESSION_A)).isFalse();
         assertThat(policy.accepts(post("http://shell.slg.test", token, null), tokens, SESSION_A)).isFalse();
         assertThat(policy.accepts(post("null", token, null), tokens, SESSION_A)).isFalse();
+        assertThat(policy.accepts(post("https://shell.slg.test.evil.example", token, null), tokens, SESSION_A)).isFalse();
+        assertThat(policy.accepts(post("https://evilshell.slg.test", token, null), tokens, SESSION_A)).isFalse();
+        assertThat(policy.accepts(post("https://shell.slg.test/", token, null), tokens, SESSION_A)).isFalse();
     }
 
     @Test
@@ -103,13 +106,16 @@ class CsrfTest {
     void policyKnowsItsOriginIncludingAPort() {
         assertThat(policy.shellOrigin()).isEqualTo("https://shell.slg.test");
         assertThat(new CsrfPolicy("https://Shell.slg.test:8443").shellOrigin()).isEqualTo("https://shell.slg.test:8443");
+        assertThat(new CsrfPolicy("https://shell.slg.test:443").shellOrigin()).as("browsers omit the default port")
+                .isEqualTo("https://shell.slg.test");
+        assertThat(new CsrfPolicy("http://localhost:80").shellOrigin()).isEqualTo("http://localhost");
     }
 
     @Test
     void onlyGetAndHeadAreSafe() {
         assertThat(CsrfPolicy.isSafe("GET")).isTrue();
-        assertThat(CsrfPolicy.isSafe("head")).isTrue();
-        for (String method : new String[] {"POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE"}) {
+        assertThat(CsrfPolicy.isSafe("HEAD")).isTrue();
+        for (String method : new String[] {"POST", "PUT", "PATCH", "DELETE", "OPTIONS", "TRACE", "get", "head", "Get"}) {
             assertThat(CsrfPolicy.isSafe(method)).as(method).isFalse();
         }
     }

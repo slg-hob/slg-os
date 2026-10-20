@@ -29,6 +29,9 @@ class PageResponses {
                 .header(HttpHeaders.CONTENT_LANGUAGE, language)
                 .header("Content-Security-Policy", CSP)
                 .header("Referrer-Policy", "no-referrer");
+        if (status == HttpStatus.TOO_MANY_REQUESTS || status == HttpStatus.SERVICE_UNAVAILABLE) {
+            builder.header(HttpHeaders.RETRY_AFTER, status == HttpStatus.TOO_MANY_REQUESTS ? "60" : "30");
+        }
         for (String cookie : cookies) {
             builder.header(HttpHeaders.SET_COOKIE, cookie);
         }

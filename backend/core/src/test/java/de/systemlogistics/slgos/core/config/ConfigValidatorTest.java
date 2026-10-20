@@ -36,7 +36,7 @@ class ConfigValidatorTest {
                 new SlgProperties.Session(Duration.ofMinutes(30), Duration.ofHours(10), 10, Duration.ofSeconds(60),
                         Duration.ofMinutes(5), keys.toString(), "k1", csrf.toString()),
                 new SlgProperties.Db("jdbc:postgresql://db/platform", "slg_app", secret.toString(), "slg_migrator",
-                        secret.toString(), 10));
+                        secret.toString(), 10, "classpath:db/migration"));
     }
 
     private SlgProperties valid() {
@@ -58,7 +58,7 @@ class ConfigValidatorTest {
                 new SlgProperties.Oidc(null, "slg-core", null, Duration.ofSeconds(3)),
                 new SlgProperties.Session(Duration.ofMinutes(30), Duration.ofHours(10), 10, Duration.ofSeconds(60),
                         Duration.ofMinutes(5), null, null, null),
-                new SlgProperties.Db(null, null, null, null, null, 10));
+                new SlgProperties.Db(null, null, null, null, null, 10, "classpath:db/migration"));
         List<ConfigProblem> problems = ConfigValidator.validate(empty);
         assertThat(variables(problems)).contains("SLG_SHELL_BASE_URL", "SLG_OIDC_ISSUER", "SLG_OIDC_CLIENT_SECRET_FILE",
                 "SLG_SESSION_VAULT_KEYS_FILE", "SLG_SESSION_VAULT_ACTIVE_KEY_ID", "SLG_SESSION_CSRF_KEY_FILE", "SLG_DB_URL",
@@ -102,6 +102,18 @@ class ConfigValidatorTest {
     }
 
     @Test
+    void productionNeedsTheProxyNetworkAndRefusesLocalhostAsInternalHost() {
+        SlgProperties base = valid("production", "https://os.example.com", "https://sso.example.com/realms/slg");
+        SlgProperties open = new SlgProperties("production", base.shellBaseUrl(), List.of("core-backend", "localhost"), List.of(),
+                null, base.oidc(), base.session(), base.db());
+        assertThat(variables(ConfigValidator.validate(open))).containsExactlyInAnyOrder("SLG_TRUSTED_PROXY_CIDRS",
+                "SLG_INTERNAL_HOSTS");
+        SlgProperties closed = new SlgProperties("production", base.shellBaseUrl(), List.of("core-backend"),
+                List.of("172.20.0.0/16"), null, base.oidc(), base.session(), base.db());
+        assertThat(ConfigValidator.validate(closed)).isEmpty();
+    }
+
+    @Test
     void validatesSessionSettings() {
         SlgProperties base = valid();
         SlgProperties.Session s = base.session();
@@ -141,7 +153,7 @@ class ConfigValidatorTest {
         SlgProperties bad = new SlgProperties(base.env(), base.shellBaseUrl(), base.internalHosts(), List.of("not-a-cidr"), null,
                 new SlgProperties.Oidc(base.oidc().issuer(), "slg-core", dir.resolve("absent").toString(), Duration.ofSeconds(3)),
                 base.session(), new SlgProperties.Db("mysql://x", "slg_app", empty.toString(), "slg_migrator",
-                secret.toString(), 1));
+                secret.toString(), 1, "classpath:db/migration"));
         assertThat(variables(ConfigValidator.validate(bad))).containsExactlyInAnyOrder("SLG_OIDC_CLIENT_SECRET_FILE",
                 "SLG_DB_URL", "SLG_DB_APP_PASSWORD_FILE", "SLG_DB_POOL_SIZE", "SLG_TRUSTED_PROXY_CIDRS");
     }

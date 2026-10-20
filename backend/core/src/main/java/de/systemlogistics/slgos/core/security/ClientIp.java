@@ -25,14 +25,22 @@ public class ClientIp {
         return proxyNetworks.stream().anyMatch(c -> c.contains(peer));
     }
 
-    /** The client address: the proxy-reported one if the peer is the proxy, else the TCP peer. */
+    /** The client address: the right-most non-proxy entry of {@code X-Forwarded-For} if the peer is the proxy, else the TCP peer. */
     public String of(HttpServletRequest request) {
         if (fromProxy(request)) {
             String forwarded = request.getHeader("X-Forwarded-For");
             if (forwarded != null) {
-                String first = forwarded.split(",")[0].strip();
-                if (Cidr.isIpLiteral(first)) {
-                    return first;
+                // A proxy may append to what the client sent, so the client-controlled entries are on the left:
+                // take the right-most entry that is not itself a proxy.
+                String[] entries = forwarded.split(",");
+                for (int i = entries.length - 1; i >= 0; i--) {
+                    String entry = entries[i].strip();
+                    if (!Cidr.isIpLiteral(entry)) {
+                        break;
+                    }
+                    if (proxyNetworks.stream().noneMatch(c -> c.contains(entry))) {
+                        return entry;
+                    }
                 }
             }
         }

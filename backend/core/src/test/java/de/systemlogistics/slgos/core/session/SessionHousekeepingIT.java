@@ -52,11 +52,13 @@ class SessionHousekeepingIT extends SessionTestSupport {
 
     @Test
     void theSessionRequirementCoversExactlyTheProtectedPaths() {
-        for (String path : new String[] {"/core/api/v1/session", "/core/auth/logout", "/app", "/app/x", "/modules/m/api/x"}) {
+        for (String path : new String[] {"/core/api/v1/session", "/core/auth/logout", "/app", "/app/x", "/modules/m/api/x",
+                "/application", "/actuator/health", "/anything/else", "/core/auth/login/", "/core/auth/loginx", "/"}) {
             assertThat(SessionFilter.requiresSession(path)).as(path).isTrue();
         }
-        for (String path : new String[] {"/core/auth/login", "/core/auth/callback", "/core/internal/backchannel-logout",
-                "/core/auth/assets/pages.css", "/application", "/actuator/health"}) {
+        for (String path : new String[] {"/core/auth/login", "/core/auth/callback", "/core/auth/signed-out",
+                "/core/auth/popup-done", "/core/internal/backchannel-logout", "/core/internal", "/core/auth/assets/pages.css",
+                "/favicon.ico"}) {
             assertThat(SessionFilter.requiresSession(path)).as(path).isFalse();
         }
     }

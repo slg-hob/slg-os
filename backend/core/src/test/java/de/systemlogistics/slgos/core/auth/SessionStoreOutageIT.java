@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import de.systemlogistics.slgos.core.testsupport.Browser;
+import de.systemlogistics.slgos.core.testsupport.FakeKeycloak;
 import de.systemlogistics.slgos.core.testsupport.IntegrationTestBase;
 import de.systemlogistics.slgos.core.testsupport.TestDatabase;
 import java.sql.Connection;
@@ -27,6 +28,9 @@ class SessionStoreOutageIT extends IntegrationTestBase {
     void answers503WithoutFallbackAndRecoversWhenTheDatabaseReturns() throws Exception {
         Browser browser = new Browser(mvc, ENV.keycloak, ENV.clock);
         browser.login("outage-user-" + System.nanoTime(), "/slg/admins");
+        Browser signingIn = new Browser(mvc, ENV.keycloak, ENV.clock);
+        java.util.Map<String, String> pending = signingIn.startLogin("?return=/app/reference");
+        FakeKeycloak.User newcomer = ENV.keycloak.user("outage-newcomer-" + System.nanoTime());
         try (Connection admin = ENV.db.admin(); Statement st = admin.createStatement()) {
             st.execute("ALTER ROLE " + TestDatabase.APP_USER + " NOLOGIN");
             st.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename = '" + TestDatabase.APP_USER + "'");
@@ -42,17 +46,23 @@ class SessionStoreOutageIT extends IntegrationTestBase {
                         .param("logout_token", ENV.keycloak.sign(ENV.keycloak.logoutClaims("some-sid", null).build())))
                         .andReturn().getResponse();
                 assertThat(logout.getStatus()).as("Keycloak retries a 503").isEqualTo(503);
+                MockHttpServletResponse callback = signingIn.callback(pending, newcomer, ENV.clock.instant());
+                assertThat(callback.getStatus()).as("the sign-in page, not a JSON error").isEqualTo(503);
+                assertThat(callback.getContentType()).startsWith("text/html");
+                assertThat(callback.getContentAsString()).contains("role=\"alert\"");
             } finally {
                 st.execute("ALTER ROLE " + TestDatabase.APP_USER + " LOGIN");
             }
         }
         int status = 0;
-        for (int attempt = 0; attempt < 20 && status != 200; attempt++) {
+        for (int attempt = 0; attempt < 40 && status != 200; attempt++) {
             status = call(browser, "/core/api/v1/session").getStatus();
             if (status != 200) {
                 Thread.sleep(500);
             }
         }
         assertThat(status).as("the same session works again without a restart").isEqualTo(200);
+        assertThat(jdbc.sql("SELECT count(*) FROM logout_jti WHERE jti = ?").param("login-state:" + pending.get("state"))
+                .query(Long.class).single()).as("the failed attempt did not burn the state").isZero();
     }
 }

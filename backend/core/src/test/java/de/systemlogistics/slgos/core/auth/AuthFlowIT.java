@@ -250,7 +250,7 @@ class AuthFlowIT extends IntegrationTestBase {
         String ok = newUser();
         Map<String, String> request = browser.startLogin("?stepup=1&return=/app/reference");
         assertThat(request).containsEntry("prompt", "login").containsEntry("max_age", "0");
-        MockHttpServletResponse fresh = browser.callback(request, ENV.keycloak.user(ok), ENV.clock.instant().minusSeconds(30));
+        MockHttpServletResponse fresh = browser.callback(request, ENV.keycloak.user(ok), ENV.clock.instant());
         assertThat(fresh.getStatus()).isEqualTo(200);
         assertThat(jdbc.sql("SELECT outcome FROM audit_event WHERE event_type = 'auth.step_up' AND actor_id = ?").param(ok)
                 .query(String.class).list()).containsExactly("success");
@@ -267,6 +267,16 @@ class AuthFlowIT extends IntegrationTestBase {
     }
 
     @Test
+    void stepUpRefusesAnAuthenticationThatIsOlderThanTheRequestEvenIfItIsRecent() throws Exception {
+        String sub = newUser();
+        Map<String, String> request = browser.startLogin("?stepup=1");
+        MockHttpServletResponse response = browser.callback(request, ENV.keycloak.user(sub), ENV.clock.instant().minus(Duration.ofMinutes(2)));
+        assertThat(response.getStatus()).as("a two minute old sign-in is within the maximum age but predates the request").isEqualTo(400);
+        assertThat(jdbc.sql("SELECT outcome FROM audit_event WHERE event_type = 'auth.step_up' AND actor_id = ?").param(sub)
+                .query(String.class).list()).containsExactly("failure");
+    }
+
+    @Test
     void aNewLoginReplacesTheSessionOfTheSameBrowser() throws Exception {
         String sub = newUser();
         browser.login(sub);
@@ -276,6 +286,103 @@ class AuthFlowIT extends IntegrationTestBase {
         assertThat(jdbc.sql("SELECT count(*) FROM session WHERE user_id = ?").param(sub).query(Long.class).single()).isEqualTo(1);
         assertThat(audit("auth.login", sub)).isEqualTo(2);
         assertThat(terminations(sub)).as("replacement is not a forced termination").isEmpty();
+    }
+
+    @Test
+    void aLoginByAnotherUserEndsTheOldSessionOfTheBrowserWithAnAuditEntry() throws Exception {
+        String first = newUser();
+        String second = newUser();
+        browser.login(first);
+        browser.login(second);
+        assertThat(jdbc.sql("SELECT count(*) FROM session WHERE user_id = ?").param(first).query(Long.class).single()).isZero();
+        assertThat(terminations(first)).containsExactly("replaced");
+    }
+
+    @Test
+    void aSecondUseOfTheStateFailsOnAnyContainerBecauseItIsRecordedInTheDatabase() throws Exception {
+        FakeKeycloak.User user = ENV.keycloak.user(newUser());
+        Map<String, String> request = browser.startLogin("");
+        assertThat(browser.callback(request, user, ENV.clock.instant()).getStatus()).isEqualTo(200);
+        assertThat(jdbc.sql("SELECT count(*) FROM logout_jti WHERE jti = ?").param("login-state:" + request.get("state"))
+                .query(Long.class).single()).isEqualTo(1);
+    }
+
+    @Test
+    void aStateThatNeverCompletedTheExchangeIsNotBurned() throws Exception {
+        FakeKeycloak.User user = ENV.keycloak.user(newUser());
+        Map<String, String> request = browser.startLogin("");
+        String loginCookie = browser.cookie("__Host-slg-login");
+        assertThat(mvc.perform(browser.shell(get("/core/auth/callback").param("code", "unknown")
+                .param("state", request.get("state")))).andReturn().getResponse().getStatus()).isEqualTo(400);
+        browser.setCookie("__Host-slg-login", loginCookie);
+        assertThat(browser.callback(request, user, ENV.clock.instant()).getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void errorResponsesOfTheCallbackDeleteThePreLoginCookieWithTheAttributesTheHostPrefixNeeds() throws Exception {
+        browser.startLogin("");
+        MockHttpServletResponse response = mvc.perform(browser.shell(get("/core/auth/callback").param("error", "access_denied")))
+                .andReturn().getResponse();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getHeader("Set-Cookie")).startsWith("__Host-slg-login=;").contains("Max-Age=0", "Secure", "Path=/");
+        assertThat(response.getHeader("Cache-Control")).isEqualTo("no-store");
+        assertThat(response.getHeader("Referrer-Policy")).isEqualTo("no-referrer");
+    }
+
+    @Test
+    void rateLimitedAndUnavailablePagesTellClientsWhenToRetry() throws Exception {
+        browser.startLogin("");
+        ENV.keycloak.stop();
+        availability.report(false);
+        try {
+            MockHttpServletResponse response = mvc.perform(browser.shell(get("/core/auth/login"))).andReturn().getResponse();
+            assertThat(response.getStatus()).isEqualTo(503);
+            assertThat(response.getHeader("Retry-After")).isEqualTo("30");
+            assertThat(response.getContentAsString()).contains("rel=\"icon\"");
+        } finally {
+            ENV.keycloak.restart();
+            availability.report(true);
+        }
+    }
+
+    @Test
+    void encodedAndParameterisedPathsDoNotSkipTheSessionCheck() throws Exception {
+        for (String path : new String[] {"/%61pp/x", "/app;x=1/y", "//app/x", "/./app/x", "/core/%61pi/v1/session",
+                "/core/api;x/v1/session", "/core/auth/%6cogout"}) {
+            MockHttpServletResponse response = mvc.perform(browser.shell(get(java.net.URI.create(Browser.ORIGIN + path))))
+                    .andReturn().getResponse();
+            assertThat(response.getStatus()).as(path).isIn(302, 400, 401, 404);
+            assertThat(response.getContentAsString()).as(path).doesNotContain("SLG OS");
+        }
+    }
+
+    @Test
+    void unsupportedMethodsAndUnexpectedErrorsGetProblemDetailsWithCodes() throws Exception {
+        Browser.Session me = browser.login(newUser());
+        MockHttpServletResponse response = mvc.perform(browser.shell(post("/core/api/v1/session").header("Origin", Browser.ORIGIN)
+                .header("X-Slg-Csrf", me.csrf()))).andReturn().getResponse();
+        assertThat(response.getStatus()).isEqualTo(405);
+        assertThat(response.getContentAsString()).contains("\"code\":\"BAD_REQUEST\"", "\"status\":405");
+    }
+
+    @Test
+    void logoutStillWorksWhenTheStoredIdTokenCannotBeDecrypted() throws Exception {
+        String sub = newUser();
+        Browser.Session me = browser.login(sub);
+        jdbc.sql("UPDATE session SET vault_key_id = 'retired' WHERE user_id = ?").param(sub).update();
+        MockHttpServletResponse response = mvc.perform(browser.shell(post("/core/auth/logout").header("Origin", Browser.ORIGIN)
+                .header("X-Slg-Csrf", me.csrf()))).andReturn().getResponse();
+        assertThat(response.getStatus()).isEqualTo(303);
+        assertThat(response.getHeader("Location")).isEqualTo("https://shell.slg.test/core/auth/signed-out");
+        assertThat(jdbc.sql("SELECT count(*) FROM session WHERE user_id = ?").param(sub).query(Long.class).single()).isZero();
+        assertThat(audit("auth.logout", sub)).isEqualTo(1);
+    }
+
+    @Test
+    void theSessionViewCarriesTheDeadlinesForTheIdleWarning() throws Exception {
+        browser.login(newUser());
+        String body = mvc.perform(browser.shell(get("/core/api/v1/session"))).andReturn().getResponse().getContentAsString();
+        assertThat(body).contains("\"timing\":{\"serverTime\":\"", "\"idleExpiresAt\":\"", "\"absoluteExpiresAt\":\"");
     }
 
     // ---- first request after login, session view
@@ -415,8 +522,9 @@ class AuthFlowIT extends IntegrationTestBase {
         browser.login(sub);
         for (int i = 0; i < 5; i++) {
             ENV.clock.advance(Duration.ofMinutes(8));
+            int expected = i < 3 ? 200 : 401;
             assertThat(mvc.perform(browser.shell(get("/core/api/v1/session")).header("X-Slg-Background", "1")).andReturn()
-                    .getResponse().getStatus()).isLessThanOrEqualTo(401);
+                    .getResponse().getStatus()).as("request %d, %d minutes after the last activity", i + 1, (i + 1) * 8).isEqualTo(expected);
         }
         assertThat(mvc.perform(browser.shell(get("/core/api/v1/session"))).andReturn().getResponse().getStatus())
                 .as("40 minutes of background requests only").isEqualTo(401);

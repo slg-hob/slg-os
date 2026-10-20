@@ -36,6 +36,16 @@ public final class ConfigValidator {
         }
         if (p.production()) {
             checkProductionGuard(shell, issuer, problems);
+            if (p.trustedProxyCidrs().isEmpty()) {
+                problems.add(new ConfigProblem("SLG_TRUSTED_PROXY_CIDRS",
+                        "in Produktion Pflicht, sonst teilen alle Nutzer eine Adresse (Rate-Limit, Audit)",
+                        "mandatory in production, otherwise all users share one address (rate limit, audit)"));
+            }
+            if (p.internalHosts().stream().anyMatch(h -> isTestHost(h) || h.isBlank())) {
+                problems.add(new ConfigProblem("SLG_INTERNAL_HOSTS",
+                        "in Produktion nur interne Dienstnamen, kein localhost",
+                        "in production only internal service names, no localhost"));
+            }
         }
         required("SLG_OIDC_CLIENT_ID", p.oidc().clientId(), problems);
         secretFile("SLG_OIDC_CLIENT_SECRET_FILE", p.oidc().clientSecretFile(), problems);

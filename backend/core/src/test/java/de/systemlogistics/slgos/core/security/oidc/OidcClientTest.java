@@ -113,10 +113,10 @@ class OidcClientTest {
     }
 
     @Test
-    void aWrongClientSecretIsRejected() {
+    void aWrongClientSecretIsAnOperatorProblemNotAnEndedGrant() {
         OidcClient wrong = clientFor(keycloak.issuer(), Duration.ofSeconds(3), "wrong");
         assertThatThrownBy(() -> wrong.refresh("x")).isInstanceOfSatisfying(OidcException.class,
-                e -> assertThat(e.kind()).isEqualTo(Kind.REJECTED));
+                e -> assertThat(e.kind()).as("invalid_client must not end the sessions of all users").isEqualTo(Kind.UNAVAILABLE));
     }
 
     @Test
@@ -156,7 +156,9 @@ class OidcClientTest {
 
     @Test
     void anIncompleteOrMalformedTokenResponseIsRejected() throws Exception {
-        for (String body : new String[] {"{\"access_token\":\"a\"}", "not json", "{\"access_token\":\"a\",\"refresh_token\":\"\",\"id_token\":\"i\"}"}) {
+        for (String body : new String[] {"{\"access_token\":\"a\"}", "not json", "{\"access_token\":\"a\",\"refresh_token\":\"\",\"id_token\":\"i\"}",
+                "{\"access_token\":\"a\",\"refresh_token\":\"r\",\"id_token\":\"i\",\"expires_in\":0}",
+                "{\"access_token\":\"a\",\"refresh_token\":\"r\",\"id_token\":\"i\"}"}) {
             HttpServer stub = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
             stub.createContext("/", exchange -> {
                 exchange.getRequestBody().readAllBytes();

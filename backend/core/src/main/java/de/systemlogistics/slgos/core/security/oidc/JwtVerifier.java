@@ -34,6 +34,7 @@ public class JwtVerifier {
     private final Clock clock;
     private JWKSet keys;
     private Instant fetchedAt = Instant.MIN;
+    private Instant lastAttempt = Instant.MIN;
 
     public JwtVerifier(Supplier<String> jwksSource, Clock clock) {
         this.jwksSource = jwksSource;
@@ -91,7 +92,9 @@ public class JwtVerifier {
             }
         }
         JWK found = keys.getKeyByKeyId(kid);
-        if (found == null && fetchedAt.plus(REFETCH_INTERVAL).isBefore(now)) {
+        if (found == null && lastAttempt.plus(REFETCH_INTERVAL).isBefore(now)) {
+            // The attempt time is recorded before the fetch, so a failing Keycloak is asked at most every 30 seconds.
+            lastAttempt = now;
             load(now);
             found = keys.getKeyByKeyId(kid);
         }
@@ -99,6 +102,7 @@ public class JwtVerifier {
     }
 
     private void load(Instant now) {
+        lastAttempt = now;
         String json = jwksSource.get();
         try {
             keys = JWKSet.parse(json);

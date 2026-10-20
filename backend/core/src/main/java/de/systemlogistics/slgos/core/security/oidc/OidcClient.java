@@ -31,7 +31,6 @@ public class OidcClient {
     private final String clientId;
     private final String clientSecret;
     private final Duration timeout;
-    private final HttpClient http;
     private final JsonMapper mapper;
 
     public OidcClient(OidcEndpoints endpoints, String clientId, String clientSecret, Duration timeout, JsonMapper mapper) {
@@ -40,7 +39,6 @@ public class OidcClient {
         this.clientSecret = clientSecret;
         this.timeout = timeout;
         this.mapper = mapper;
-        this.http = HttpClient.newBuilder().connectTimeout(timeout).followRedirects(HttpClient.Redirect.NEVER).build();
     }
 
     public OidcEndpoints endpoints() {
@@ -124,7 +122,12 @@ public class OidcClient {
         HttpResponse<String> response = send(request);
         int status = response.statusCode();
         if (status == 400 || status == 401) {
-            throw new OidcException(Kind.REJECTED, "token endpoint refused the request (" + status + ")");
+            // Only invalid_grant means the code or refresh token is spent or unknown. Everything else (invalid_client after a
+            // secret rotation, a misconfigured realm) is an operator problem and must not end the sessions of all users.
+            if ("invalid_grant".equals(errorOf(response.body()))) {
+                throw new OidcException(Kind.REJECTED, "token endpoint refused the grant (" + status + ")");
+            }
+            throw new OidcException(Kind.UNAVAILABLE, "token endpoint refused the client (" + status + ")");
         }
         if (status != 200) {
             throw new OidcException(Kind.UNAVAILABLE, "token endpoint answered " + status);
@@ -134,17 +137,30 @@ public class OidcClient {
             String access = text(json, "access_token");
             String refresh = text(json, "refresh_token");
             String id = text(json, "id_token");
-            if (access == null || refresh == null || id == null) {
+            long expiresIn = json.path("expires_in").asLong(0);
+            if (access == null || refresh == null || id == null || expiresIn <= 0) {
                 throw new OidcException(Kind.REJECTED, "token response is incomplete");
             }
-            return new OidcTokens(access, refresh, id, json.path("expires_in").asLong(0));
+            return new OidcTokens(access, refresh, id, expiresIn);
         } catch (tools.jackson.core.JacksonException e) {
             throw new OidcException(Kind.REJECTED, "token response is not valid JSON", e);
         }
     }
 
-    private HttpResponse<String> send(HttpRequest request) {
+    private String errorOf(String body) {
         try {
+            return text(mapper.readTree(body), "error");
+        } catch (tools.jackson.core.JacksonException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Sends on a fresh connection: a pooled connection that Keycloak closed meanwhile would fail after the request was
+     * written and look like a lost response, which ends the session.
+     */
+    private HttpResponse<String> send(HttpRequest request) {
+        try (HttpClient http = HttpClient.newBuilder().connectTimeout(timeout).followRedirects(HttpClient.Redirect.NEVER).build()) {
             return http.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (HttpConnectTimeoutException | ConnectException | SSLException e) {
             throw new OidcException(Kind.UNAVAILABLE, "identity provider not reachable", e);

@@ -10,8 +10,8 @@ Der Core wird nur über Umgebungsvariablen und Secret-Dateien konfiguriert. Gehe
 |---|---|---|
 | `SLG_ENV` | `dev` | `dev`, `test`, `e2e` or `production`. In `production` the core refuses test host names (`*.test`, `localhost`) and the e2e realm. / In `production` verweigert der Core Test-Hostnamen und das E2E-Realm. |
 | `SLG_SHELL_BASE_URL` | none, mandatory | Public origin of the shell, for example `https://shell.example.com`, no path. Redirects, cookies and the `Origin` check derive from it, never from the `Host` header. / Öffentlicher Origin der Shell, ohne Pfad. |
-| `SLG_INTERNAL_HOSTS` | `core-backend,localhost` | Host names under which the internal network reaches the core (back-channel logout, permission API). `/core/internal/**` answers only for these. / Hostnamen des internen Netzes. |
-| `SLG_TRUSTED_PROXY_CIDRS` | empty | Network ranges of the reverse proxy. `X-Forwarded-For` and `X-Correlation-Id` count only from there. / Netzbereiche des Reverse Proxy. |
+| `SLG_INTERNAL_HOSTS` | `core-backend,localhost` | Host names under which the internal network reaches the core (back-channel logout, permission API). `/core/internal/**` answers only for these; the proxy must also answer 404 for the tree. In production `localhost` is refused. / Hostnamen des internen Netzes; in Produktion ist `localhost` nicht erlaubt. |
+| `SLG_TRUSTED_PROXY_CIDRS` | empty | Network ranges of the reverse proxy. `X-Forwarded-For` (the right-most address that is not a proxy) and `X-Correlation-Id` count only from there. Mandatory in production: without it all users share the proxy address (rate limit, audit). / Netzbereiche des Reverse Proxy; in Produktion Pflicht. |
 | `SLG_BOOTSTRAP_ADMIN_GROUP` | empty | Full path of the AD group that holds `platform-admin` until the permission mapping exists (M3a), for example `/slg/admins`. / Gruppenpfad der Start-Administratoren. |
 | `SLG_OIDC_ISSUER` | none, mandatory | Public issuer URL of the Keycloak realm. The core reaches Keycloak through the same URL (network alias). / Öffentliche Issuer-URL des Realms. |
 | `SLG_OIDC_CLIENT_ID` | `slg-core` | Confidential client of the core. |
@@ -28,7 +28,8 @@ Der Core wird nur über Umgebungsvariablen und Secret-Dateien konfiguriert. Gehe
 | `SLG_DB_URL` | none, mandatory | `jdbc:postgresql://host:5432/platform`. |
 | `SLG_DB_APP_USER`, `SLG_DB_APP_PASSWORD_FILE` | none, mandatory | Application role `slg_app`: no DDL, `INSERT` and `SELECT` only on `audit_event`. / Anwendungsrolle. |
 | `SLG_DB_MIGRATOR_USER`, `SLG_DB_MIGRATOR_PASSWORD_FILE` | none, mandatory | Migration role `slg_migrator`, used by Flyway only. / Migrationsrolle. |
-| `SLG_DB_POOL_SIZE` | `10` | Connection pool of the application role (at least 2). |
+| `SLG_DB_POOL_SIZE` | `10` | Connection pool of the application role (at least 2). At most half of it can wait for Keycloak at the same time. Plan `max_connections` as containers x pool size plus the migrator. |
+| `SLG_DB_MIGRATION_LOCATION` | `classpath:db/migration` | Flyway location; tests point it at broken scripts. Do not change in operation. |
 | `SLG_MANAGEMENT_PORT` | `8081` | Internal port for health and metrics; the proxy does not route it. / Interner Port für Health und Metriken. |
 
 ## Database roles / Datenbankrollen
@@ -48,4 +49,6 @@ On the management port: `/actuator/health/liveness`, `/actuator/health/readiness
 | Keycloak down at start or later / Keycloak nicht erreichbar | The core starts; readiness `DEGRADED`; sign-in shows the "sign-in unavailable" page; sessions stay valid until their cached token expires, then `AUTH_UNAVAILABLE`. |
 | PostgreSQL down / PostgreSQL nicht erreichbar | `503 SESSION_STORE_DOWN` for every session request, no unauthenticated fallback; recovery without restart. |
 | Migration failed / Migration fehlgeschlagen | Readiness `DOWN`; fix the cause and restart. |
-| Refresh response lost / Antwort beim Token-Erneuern verloren | The session ends (the rotating refresh token may be consumed); audit entry `session.terminated` with reason `refresh_lost`. |
+| Refresh response lost / Antwort beim Token-Erneuern verloren | The session ends (the rotating refresh token may be consumed); audit entry `session.terminated` with reason `refresh_lost`. A refused grant (`invalid_grant`) ends it with `refresh_rejected`; any other refusal (for example `invalid_client` after a secret rotation) keeps the sessions and counts as Keycloak unavailable. |
+| Token vault key retired / Tresor-Schlüssel entfernt | Sessions whose tokens cannot be decrypted end with reason `vault_unreadable`; sign-out still works. Keep a key until all sessions that used it ended (absolute timeout). |
+| Migration failed at start / Migration beim Start fehlgeschlagen | Retried every minute while readiness is `DOWN`. |

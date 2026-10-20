@@ -64,7 +64,10 @@ management:
       status:
         order: DOWN,OUT_OF_SERVICE,DEGRADED,UP,UNKNOWN
         http-mapping:
+          DOWN: 503
+          OUT_OF_SERVICE: 503
           DEGRADED: 200
+          UP: 200
       group:
         readiness:
           include: readinessState,migration,db,oidc

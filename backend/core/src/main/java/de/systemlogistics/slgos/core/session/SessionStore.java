@@ -58,8 +58,10 @@ class SessionStore {
         return jdbc.sql("DELETE FROM session WHERE id_hash = ? RETURNING " + COLUMNS).param(idHash).query(MAPPER).optional();
     }
 
-    List<SessionRecord> deleteBySid(String sid) {
-        return jdbc.sql("DELETE FROM session WHERE sid = ? RETURNING " + COLUMNS).param(sid).query(MAPPER).list();
+    /** Sessions of a Keycloak session id; sessions that were stored without a sid fall back to the subject. */
+    List<SessionRecord> deleteBySid(String sid, String userId) {
+        return jdbc.sql("DELETE FROM session WHERE sid = ? OR (sid IS NULL AND user_id = ?) RETURNING " + COLUMNS)
+                .params(sid, userId).query(MAPPER).list();
     }
 
     List<SessionRecord> deleteByUser(String userId) {
@@ -94,13 +96,16 @@ class SessionStore {
     }
 
     /**
-     * Locks the session row for a token refresh, or returns empty if it is gone or locked by another transaction (also of
-     * another core container). Must run inside a transaction.
+     * Takes the refresh lock of the session and returns its tokens, or returns empty if the session is gone or another
+     * transaction (also of another core container) holds the lock. The lock is a transaction-scoped advisory lock and not a
+     * row lock, so requests that only touch or delete the row are never blocked while Keycloak is slow. Must run inside a
+     * transaction.
      */
     Optional<StoredTokens> lockTokens(byte[] idHash) {
         return jdbc.sql("""
                 SELECT vault_key_id, refresh_token_ct, access_token_ct, id_token_ct, access_expires_at
-                FROM session WHERE id_hash = ? FOR UPDATE SKIP LOCKED""").param(idHash)
+                FROM session
+                WHERE id_hash = ? AND pg_try_advisory_xact_lock(hashtextextended(encode(id_hash, 'hex'), 0))""").param(idHash)
                 .query((rs, n) -> new StoredTokens(rs.getString(1), rs.getBytes(2), rs.getBytes(3), rs.getBytes(4),
                         rs.getObject(5, OffsetDateTime.class).toInstant()))
                 .optional();
@@ -115,9 +120,10 @@ class SessionStore {
                 .optional();
     }
 
-    void updateTokens(byte[] idHash, StoredTokens tokens, List<String> groups, String displayName, String locale,
+    /** @return the number of rows changed (0 when the session was deleted meanwhile) */
+    int updateTokens(byte[] idHash, StoredTokens tokens, List<String> groups, String displayName, String locale,
             Instant authTime) {
-        jdbc.sql("""
+        return jdbc.sql("""
                 UPDATE session SET vault_key_id = ?, refresh_token_ct = ?, access_token_ct = ?, id_token_ct = ?,
                        access_expires_at = ?, groups = ?, display_name = COALESCE(?, display_name),
                        locale = COALESCE(?, locale), auth_time = COALESCE(?, auth_time)
@@ -128,10 +134,12 @@ class SessionStore {
                 .update();
     }
 
-    /** The latest live session of a user (by last access), for permission lookups of background callers. */
-    Optional<SessionRecord> latestOfUser(String userId) {
-        return jdbc.sql("SELECT " + COLUMNS + " FROM session WHERE user_id = ? ORDER BY last_access DESC LIMIT 1")
-                .param(userId).query(MAPPER).optional();
+    /** The latest session of a user (by last access) that is still inside both timeouts, for permission lookups. */
+    Optional<SessionRecord> latestOfUser(String userId, Instant idleCutoff, Instant absoluteCutoff) {
+        return jdbc.sql("SELECT " + COLUMNS + """
+                 FROM session WHERE user_id = ? AND last_access > ? AND created_at > ?
+                ORDER BY last_access DESC LIMIT 1""").params(userId, time(idleCutoff), time(absoluteCutoff))
+                .query(MAPPER).optional();
     }
 
     boolean markJtiSeen(String jti, Instant now) {

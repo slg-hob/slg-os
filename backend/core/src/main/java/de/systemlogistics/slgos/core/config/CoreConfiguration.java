@@ -62,7 +62,7 @@ public class CoreConfiguration {
         migrator.setUser(p.db().migratorUser());
         migrator.setPassword(Secrets.read(p.db().migratorPasswordFile()));
         migrator.setConnectTimeout(5);
-        return new MigrationRunner(migrator, state);
+        return new MigrationRunner(migrator, state, p.db().migrationLocation());
     }
 
     @Bean

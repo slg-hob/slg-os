@@ -24,7 +24,7 @@ class RequestFiltersTest {
         return new SlgProperties("test", "https://shell.slg.test", List.of("core-backend", "localhost"), proxies, null,
                 new SlgProperties.Oidc(null, "slg-core", null, Duration.ofSeconds(3)),
                 new SlgProperties.Session(null, null, 10, null, null, null, null, null),
-                new SlgProperties.Db(null, null, null, null, null, 10));
+                new SlgProperties.Db(null, null, null, null, null, 10, "classpath:db/migration"));
     }
 
     private MockHttpServletRequest request(String method, String uri, String host, String remote) {
@@ -49,6 +49,16 @@ class RequestFiltersTest {
     void shellHostReachesPublicPaths() throws Exception {
         assertThat(host("/app/x", "shell.slg.test").getContentAsString()).isEqualTo("reached");
         assertThat(host("/core/auth/login", "SHELL.slg.test:443").getContentAsString()).isEqualTo("reached");
+    }
+
+    @Test
+    void encodedAndParameterisedInternalPathsAreStillInternal() throws Exception {
+        for (String path : new String[] {"/core/%69nternal/backchannel-logout", "/core/internal;x=1/backchannel-logout",
+                "/core//internal/backchannel-logout", "/core/./internal/x", "/core/auth/../internal/x", "/core/internal"}) {
+            MockHttpServletResponse response = host(path, "shell.slg.test");
+            assertThat(response.getStatus()).as(path).isEqualTo(404);
+        }
+        assertThat(host("/core/%69nternal/backchannel-logout", "core-backend").getContentAsString()).isEqualTo("reached");
     }
 
     @Test
@@ -115,6 +125,13 @@ class RequestFiltersTest {
         MockHttpServletRequest direct = request("GET", "/", "shell.slg.test", "203.0.113.9");
         direct.addHeader("X-Forwarded-For", "198.51.100.7");
         assertThat(clientIp.of(direct)).isEqualTo("203.0.113.9");
+        MockHttpServletRequest spoofed = request("GET", "/", "shell.slg.test", "172.20.0.5");
+        spoofed.addHeader("X-Forwarded-For", "6.6.6.6, 198.51.100.7");
+        assertThat(clientIp.of(spoofed)).as("the proxy appended the real client; the client-supplied left side is ignored")
+                .isEqualTo("198.51.100.7");
+        MockHttpServletRequest chain = request("GET", "/", "shell.slg.test", "172.20.0.5");
+        chain.addHeader("X-Forwarded-For", "6.6.6.6, 198.51.100.7, 172.20.0.9");
+        assertThat(clientIp.of(chain)).isEqualTo("198.51.100.7");
         MockHttpServletRequest junk = request("GET", "/", "shell.slg.test", "172.20.0.5");
         junk.addHeader("X-Forwarded-For", "not-an-ip");
         assertThat(clientIp.of(junk)).isEqualTo("172.20.0.5");
@@ -139,6 +156,12 @@ class RequestFiltersTest {
         MockHttpServletResponse asset = new MockHttpServletResponse();
         filter.doFilter(request("GET", "/assets/x.js", "h", "10.0.0.1"), asset, (FilterChain) (req, res) -> { });
         assertThat(asset.getHeader("Cache-Control")).isNull();
+        MockHttpServletResponse pageAsset = new MockHttpServletResponse();
+        filter.doFilter(request("GET", "/core/auth/assets/pages.css", "h", "10.0.0.1"), pageAsset, (FilterChain) (req, res) -> { });
+        assertThat(pageAsset.getHeader("Cache-Control")).isEqualTo("public, max-age=3600");
+        MockHttpServletResponse encoded = new MockHttpServletResponse();
+        filter.doFilter(request("GET", "/%61pp/x", "h", "10.0.0.1"), encoded, (FilterChain) (req, res) -> { });
+        assertThat(encoded.getHeader("Cache-Control")).as("encoded paths are classified by their decoded form").isEqualTo("no-store");
     }
 
     @Test

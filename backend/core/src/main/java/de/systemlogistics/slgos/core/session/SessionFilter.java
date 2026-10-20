@@ -2,8 +2,10 @@ package de.systemlogistics.slgos.core.session;
 
 import de.systemlogistics.slgos.core.config.SlgProperties;
 import de.systemlogistics.slgos.core.security.CsrfTokens;
+import de.systemlogistics.slgos.core.security.Logs;
 import de.systemlogistics.slgos.core.security.ErrorCode;
 import de.systemlogistics.slgos.core.security.ProblemWriter;
+import de.systemlogistics.slgos.core.security.RequestPaths;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +25,7 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Requires a live session for {@code /core/api/**}, {@code /core/auth/logout}, {@code /app/**} and {@code /modules/**}.
+ * Requires a live session for every path except the allowlist in {@link #requiresSession(String)}.
  * No session: {@code /app/**} redirects to the login, everything else answers 401 SESSION_EXPIRED. The session store being
  * down answers 503 SESSION_STORE_DOWN and never falls back to an unauthenticated path (PRD-0003 SK-5 AC5). Requests marked
  * {@code X-Slg-Background} do not count as activity (SK-3 AC4).
@@ -49,12 +51,19 @@ public class SessionFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !requiresSession(request.getRequestURI());
+        return !requiresSession(RequestPaths.of(request));
     }
 
+    /**
+     * Deny by default: every canonical path needs a session except this allowlist (sign-in pages and assets, the internal
+     * tree that authenticates by token, the favicon). Evaluated on {@link RequestPaths}, never on the raw URI.
+     */
     static boolean requiresSession(String path) {
-        return path.startsWith("/core/api/") || path.equals("/core/auth/logout") || path.equals("/app")
-                || path.startsWith("/app/") || path.startsWith("/modules/");
+        boolean open = path.equals("/core/auth/login") || path.equals("/core/auth/callback")
+                || path.equals("/core/auth/signed-out") || path.equals("/core/auth/popup-done")
+                || path.startsWith("/core/auth/assets/") || path.equals("/core/internal")
+                || path.startsWith("/core/internal/") || path.equals("/favicon.ico");
+        return !open;
     }
 
     @Override
@@ -68,7 +77,7 @@ public class SessionFilter extends OncePerRequestFilter {
                 sessions.touch(session.get(), false);
             }
         } catch (DataAccessException | TransactionException e) {
-            LOG.error("session store unavailable", e);
+            LOG.error("session store unavailable: {}", Logs.safe(e));
             problems.write(response, ErrorCode.SESSION_STORE_DOWN);
             return;
         }
@@ -79,7 +88,7 @@ public class SessionFilter extends OncePerRequestFilter {
             if (isPageRequest(request)) {
                 response.setStatus(HttpServletResponse.SC_FOUND);
                 response.setHeader(HttpHeaders.LOCATION, shellBaseUrl + "/core/auth/login?return="
-                        + URLEncoder.encode(request.getRequestURI(), StandardCharsets.UTF_8));
+                        + URLEncoder.encode(RequestPaths.of(request), StandardCharsets.UTF_8));
             } else {
                 problems.write(response, ErrorCode.SESSION_EXPIRED);
             }
@@ -91,7 +100,7 @@ public class SessionFilter extends OncePerRequestFilter {
     }
 
     private static boolean isPageRequest(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = RequestPaths.of(request);
         return "GET".equals(request.getMethod()) && (path.equals("/app") || path.startsWith("/app/"));
     }
 }

@@ -235,6 +235,82 @@ class TokenRefresherIT extends SessionTestSupport {
     }
 
     @Test
+    void renewalsOfManyDifferentSessionsAreCappedSoTheOtherRequestsKeepTheirConnections() throws Exception {
+        List<Created> stalled = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            stalled.add(createSession(newSub()));
+        }
+        Created other = createSession(newSub());
+        ENV.keycloak.delayRefresh(Duration.ofMillis(1200));
+        ENV.clock.advance(Duration.ofSeconds(290));
+        sessions.touch(sessions.resolve(other.session().cookieValue()).orElseThrow(), true);
+        ExecutorService pool = Executors.newFixedThreadPool(8);
+        List<Future<String>> futures = stalled.stream().map(c -> pool.submit(() -> refresher.freshAccessToken(c.hash())))
+                .collect(Collectors.toList());
+        Thread.sleep(400);
+        long begin = System.nanoTime();
+        for (int i = 0; i < 30; i++) {
+            assertThat(sessions.resolve(other.session().cookieValue())).isPresent();
+            sessions.touch(sessions.resolve(other.session().cookieValue()).orElseThrow(), true);
+        }
+        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - begin))
+                .as("touching and reading other sessions is never blocked by renewals, which hold at most half of the pool")
+                .isLessThan(1500);
+        for (Future<String> f : futures) {
+            assertThat(f.get(30, TimeUnit.SECONDS)).isNotNull();
+        }
+        pool.shutdownNow();
+    }
+
+    @Test
+    void aTouchOfTheSameSessionIsNotBlockedWhileItsRenewalWaitsForKeycloak() throws Exception {
+        Created created = createSession(newSub());
+        ENV.keycloak.delayRefresh(Duration.ofMillis(1500));
+        ENV.clock.advance(Duration.ofSeconds(290));
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        Future<String> renewal = pool.submit(() -> refresher.freshAccessToken(created.hash()));
+        Thread.sleep(400);
+        long begin = System.nanoTime();
+        for (int i = 0; i < 20; i++) {
+            sessions.touch(sessions.resolve(created.session().cookieValue()).orElseThrow(), true);
+        }
+        assertThat(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - begin)).as("the row is not locked by the renewal").isLessThan(1000);
+        assertThat(renewal.get(30, TimeUnit.SECONDS)).isNotNull();
+        pool.shutdownNow();
+    }
+
+    @Test
+    void unreadableVaultDataEndsTheSessionWithAnAuditReasonInsteadOfFailing() {
+        String sub = newSub();
+        Created created = createSession(sub);
+        db.sql("UPDATE session SET vault_key_id = 'retired' WHERE user_id = ?").param(sub).update();
+        assertThatThrownBy(() -> refresher.freshAccessToken(created.hash())).isInstanceOf(SessionGoneException.class);
+        assertThat(reasons(sub)).containsExactly("vault_unreadable");
+
+        String sub2 = newSub();
+        Created expired = createSession(sub2);
+        ENV.clock.advance(Duration.ofSeconds(290));
+        db.sql("UPDATE session SET vault_key_id = 'retired' WHERE user_id = ?").param(sub2).update();
+        assertThatThrownBy(() -> refresher.freshAccessToken(expired.hash())).isInstanceOf(SessionGoneException.class);
+        assertThat(reasons(sub2)).containsExactly("vault_unreadable");
+    }
+
+    @Test
+    void aSessionDeletedDuringTheRenewalIsReportedAsGoneAndNotRecreated() throws Exception {
+        String sub = newSub();
+        Created created = createSession(sub);
+        ENV.keycloak.delayRefresh(Duration.ofMillis(800));
+        ENV.clock.advance(Duration.ofSeconds(290));
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        Future<String> renewal = pool.submit(() -> refresher.freshAccessToken(created.hash()));
+        Thread.sleep(300);
+        sessions.logout(sessions.resolve(created.session().cookieValue()).orElseThrow(), "10.0.0.1");
+        assertThatThrownBy(() -> renewal.get(30, TimeUnit.SECONDS)).hasCauseInstanceOf(SessionGoneException.class);
+        assertThat(sessionRows(sub)).isZero();
+        pool.shutdownNow();
+    }
+
+    @Test
     void keyRotationKeepsOldSessionsReadableAndSealsRenewedTokensWithTheNewKey() throws Exception {
         String sub = newSub();
         Created created = createSession(sub);

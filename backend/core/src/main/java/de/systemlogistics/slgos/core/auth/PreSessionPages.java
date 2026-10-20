@@ -75,13 +75,23 @@ public class PreSessionPages {
      * @param target the validated return target for the interstitial (meta refresh and visible link); ignored otherwise
      */
     public String render(Page page, String language, String target) {
-        Properties text = messages.get(messages.containsKey(language) ? language : "de");
         String lang = messages.containsKey(language) ? language : "de";
+        Properties own = messages.get(lang);
+        Properties german = messages.get("de");
+        // A missing key in one language falls back to German instead of failing; a test keeps both files in step.
+        Properties text = new Properties() {
+            @Override
+            public String getProperty(String key) {
+                String value = own.getProperty(key);
+                return value != null ? value : german.getProperty(key, key);
+            }
+        };
         String title = text.getProperty(page.key + ".title");
         StringBuilder html = new StringBuilder(1024);
         html.append("<!doctype html>\n<html lang=\"").append(lang).append("\">\n<head>\n<meta charset=\"utf-8\">\n")
                 .append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
-                .append("<meta name=\"color-scheme\" content=\"light dark\">\n");
+                .append("<meta name=\"color-scheme\" content=\"light dark\">\n")
+                .append("<link rel=\"icon\" href=\"data:,\">\n");
         if (page == Page.INTERSTITIAL) {
             html.append("<meta http-equiv=\"refresh\" content=\"0;url=").append(escape(target)).append("\">\n");
         }

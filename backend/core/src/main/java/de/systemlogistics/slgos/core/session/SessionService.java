@@ -155,7 +155,13 @@ public class SessionService {
 
     /** The most recently used live session of a user, if any (permission lookups, PRD-0003 SK-3 AC7). */
     public Optional<SessionRecord> latestOfUser(String userId) {
-        return store.latestOfUser(userId);
+        Instant now = clock.instant();
+        return store.latestOfUser(userId, now.minus(settings.idleTimeout()), now.minus(settings.absoluteTimeout()));
+    }
+
+    /** Marks the state of a finished login as used; false if it was used before (replay across containers). */
+    public boolean markLoginStateUsed(String state) {
+        return store.markJtiSeen("login-state:" + state, clock.instant());
     }
 
     /**
@@ -169,7 +175,8 @@ public class SessionService {
             if (!store.markJtiSeen(jti, clock.instant())) {
                 return null;
             }
-            List<SessionRecord> gone = sid != null && !sid.isBlank() ? store.deleteBySid(sid) : store.deleteByUser(subject);
+            boolean hasSid = sid != null && !sid.isBlank();
+            List<SessionRecord> gone = hasSid ? store.deleteBySid(sid, subject == null ? "" : subject) : store.deleteByUser(subject);
             gone.forEach(s -> auditTermination(s, AuditTypes.BACKCHANNEL_LOGOUT));
             return gone.size();
         }));

@@ -16,6 +16,8 @@ public final class AuditTypes {
     public static final String BACKCHANNEL_LOGOUT = "backchannel_logout";
     public static final String REFRESH_REJECTED = "refresh_rejected";
     public static final String REFRESH_LOST = "refresh_lost";
+    public static final String VAULT_UNREADABLE = "vault_unreadable";
+    public static final String REPLACED = "replaced";
 
     private AuditTypes() {}
 }

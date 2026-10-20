@@ -40,7 +40,8 @@ public class HostFilter extends OncePerRequestFilter {
         String host = hostName(request.getHeader("Host"));
         boolean shell = shellHost.equals(host);
         boolean internal = internalHosts.contains(host);
-        boolean internalPath = request.getRequestURI().startsWith(INTERNAL_PREFIX);
+        String path = RequestPaths.of(request);
+        boolean internalPath = path.equals("/core/internal") || path.startsWith(INTERNAL_PREFIX);
         if (!shell && !internal) {
             problems.write(response, ErrorCode.MISDIRECTED_HOST);
             return;

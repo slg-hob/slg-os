@@ -54,5 +54,6 @@ public record SlgProperties(
             String appPasswordFile,
             String migratorUser,
             String migratorPasswordFile,
-            @DefaultValue("10") int poolSize) {}
+            @DefaultValue("10") int poolSize,
+            @DefaultValue("classpath:db/migration") String migrationLocation) {}
 }

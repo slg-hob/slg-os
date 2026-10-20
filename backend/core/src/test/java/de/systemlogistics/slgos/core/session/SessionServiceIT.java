@@ -101,6 +101,61 @@ class SessionServiceIT extends SessionTestSupport {
     }
 
     @Test
+    void theTimeoutsEndExactlyAtTheirBoundary() {
+        String sub = newSub();
+        Created created = createSession(sub);
+        ENV.clock.advance(Duration.ofMinutes(30).minusMillis(1));
+        assertThat(sessions.resolve(cookieOf(created))).as("1 ms before the idle timeout").isPresent();
+        ENV.clock.advance(Duration.ofMillis(1));
+        assertThat(sessions.resolve(cookieOf(created))).as("exactly at the idle timeout").isEmpty();
+        assertThat(reasons(sub)).containsExactly("idle_timeout");
+
+        String other = newSub();
+        Created kept = createSession(other);
+        for (int i = 0; i < 20; i++) {
+            ENV.clock.advance(Duration.ofMinutes(29));
+            sessions.touch(sessions.resolve(cookieOf(kept)).orElseThrow(), true);
+        }
+        ENV.clock.advance(Duration.ofMinutes(20).minusMillis(1));
+        assertThat(sessions.resolve(cookieOf(kept))).as("1 ms before 10 hours").isPresent();
+        ENV.clock.advance(Duration.ofMillis(1));
+        assertThat(sessions.resolve(cookieOf(kept))).as("exactly 10 hours").isEmpty();
+        assertThat(reasons(other)).containsExactly("absolute_timeout");
+    }
+
+    @Test
+    void purgeUsesTheAbsoluteReasonForSessionsThatOutlivedTenHours() {
+        String sub = newSub();
+        Created created = createSession(sub);
+        for (int i = 0; i < 20; i++) {
+            ENV.clock.advance(Duration.ofMinutes(29));
+            sessions.touch(sessions.resolve(cookieOf(created)).orElseThrow(), true);
+        }
+        ENV.clock.advance(Duration.ofMinutes(20).plusMillis(1));
+        sessions.purgeExpired();
+        assertThat(sessionRows(sub)).isZero();
+        assertThat(reasons(sub)).containsExactly("absolute_timeout");
+    }
+
+    @Test
+    void theLatestSessionIgnoresSessionsPastTheirTimeouts() {
+        String sub = newSub();
+        createSession(sub, "/slg/admins");
+        assertThat(sessions.latestOfUser(sub)).isPresent();
+        ENV.clock.advance(Duration.ofMinutes(31));
+        assertThat(sessions.latestOfUser(sub)).as("idle for 31 minutes: no permissions any more").isEmpty();
+    }
+
+    @Test
+    void aLogoutTokenWithASidAlsoEndsSessionsStoredWithoutOne() {
+        String sub = newSub();
+        Created created = createSession(sub);
+        db.sql("UPDATE session SET sid = NULL WHERE user_id = ?").param(sub).update();
+        assertThat(sessions.applyLogoutToken("jti-null-sid-" + sub, "any-sid", sub)).contains(1);
+        assertThat(sessions.resolve(cookieOf(created))).isEmpty();
+    }
+
+    @Test
     void touchWritesAtMostEveryThirtySecondsUnlessForced() {
         String sub = newSub();
         Created created = createSession(sub);

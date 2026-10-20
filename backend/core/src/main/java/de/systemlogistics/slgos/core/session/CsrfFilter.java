@@ -4,6 +4,7 @@ import de.systemlogistics.slgos.core.security.CsrfPolicy;
 import de.systemlogistics.slgos.core.security.CsrfTokens;
 import de.systemlogistics.slgos.core.security.ErrorCode;
 import de.systemlogistics.slgos.core.security.ProblemWriter;
+import de.systemlogistics.slgos.core.security.RequestPaths;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +35,7 @@ public class CsrfFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !SessionFilter.requiresSession(request.getRequestURI()) || CsrfPolicy.isSafe(request.getMethod());
+        return !SessionFilter.requiresSession(RequestPaths.of(request)) || CsrfPolicy.isSafe(request.getMethod());
     }
 
     @Override

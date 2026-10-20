@@ -67,7 +67,7 @@ class ActuatorIT extends IntegrationTestBase {
         String port = environment.getProperty("local.server.port");
         HttpResponse<String> response = http.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/actuator/health"))
                 .build(), HttpResponse.BodyHandlers.ofString());
-        assertThat(response.statusCode()).isEqualTo(404);
+        assertThat(response.statusCode()).as("deny by default: not even a 404 without a session").isEqualTo(401);
         assertThat(response.body()).doesNotContain("\"status\":\"UP\"");
     }
 

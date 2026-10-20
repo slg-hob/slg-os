@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,8 @@ public class TokenRefresher {
     private final Clock clock;
     private final Duration margin;
     private final Counter failures;
+    /** Caps the renewals that hold a database connection while waiting for Keycloak to half of the pool. */
+    private final Semaphore renewals;
     private final ConcurrentHashMap<String, CompletableFuture<Void>> inFlight = new ConcurrentHashMap<>();
 
     TokenRefresher(SessionStore store, TokenVault vault, OidcClient oidc, IdTokenValidator idTokens,
@@ -62,6 +65,7 @@ public class TokenRefresher {
         this.clock = clock;
         this.margin = properties.session().renewMargin();
         this.failures = Counter.builder("slg_token_refresh_failures_total").register(meters);
+        this.renewals = new Semaphore(Math.max(1, properties.db().poolSize() / 2));
     }
 
     /**
@@ -75,7 +79,7 @@ public class TokenRefresher {
         for (int attempt = 0; attempt < 3; attempt++) {
             StoredTokens tokens = store.readTokens(idHash).orElseThrow(() -> new SessionGoneException("no session"));
             if (isFresh(tokens)) {
-                return vault.open(tokens.keyId(), tokens.accessToken(), SessionService.PURPOSE_ACCESS, idHash);
+                return openOrEnd(idHash, tokens);
             }
             CompletableFuture<Void> mine = new CompletableFuture<>();
             CompletableFuture<Void> running = inFlight.putIfAbsent(key, mine);
@@ -116,8 +120,33 @@ public class TokenRefresher {
         }
     }
 
+    /** Decrypts the cached access token; an unreadable vault entry (retired key, damaged data) ends the session. */
+    private String openOrEnd(byte[] idHash, StoredTokens tokens) {
+        try {
+            return vault.open(tokens.keyId(), tokens.accessToken(), SessionService.PURPOSE_ACCESS, idHash);
+        } catch (IllegalStateException e) {
+            store.find(idHash).ifPresent(s -> sessions.terminate(s, AuditTypes.VAULT_UNREADABLE));
+            throw new SessionGoneException("stored tokens are unreadable");
+        }
+    }
+
     private void renew(byte[] idHash) {
-        Outcome outcome = tx.execute(status -> renewLocked(idHash));
+        boolean permit;
+        try {
+            permit = renewals.tryAcquire(WAIT_LIMIT.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AuthUnavailableException("interrupted", e);
+        }
+        if (!permit) {
+            throw new AuthUnavailableException("too many renewals are waiting for the identity provider");
+        }
+        Outcome outcome;
+        try {
+            outcome = tx.execute(status -> renewLocked(idHash));
+        } finally {
+            renewals.release();
+        }
         switch (outcome == null ? Outcome.UNAVAILABLE : outcome) {
             case FRESH -> { }
             case GONE -> throw new SessionGoneException("session ended during renewal");
@@ -143,7 +172,12 @@ public class TokenRefresher {
         if (session == null) {
             return Outcome.GONE;
         }
-        String refreshToken = vault.open(current.keyId(), current.refreshToken(), SessionService.PURPOSE_REFRESH, idHash);
+        String refreshToken;
+        try {
+            refreshToken = vault.open(current.keyId(), current.refreshToken(), SessionService.PURPOSE_REFRESH, idHash);
+        } catch (IllegalStateException e) {
+            return end(session, AuditTypes.VAULT_UNREADABLE);
+        }
         OidcTokens renewed;
         IdTokenClaims claims;
         try {
@@ -165,8 +199,8 @@ public class TokenRefresher {
                 vault.seal(renewed.accessToken(), SessionService.PURPOSE_ACCESS, idHash),
                 vault.seal(renewed.idToken(), SessionService.PURPOSE_ID, idHash),
                 now.plusSeconds(renewed.expiresInSeconds()));
-        store.updateTokens(idHash, next, claims.groups(), claims.displayName(), claims.locale(), null);
-        return Outcome.FRESH;
+        int changed = store.updateTokens(idHash, next, claims.groups(), claims.displayName(), claims.locale(), null);
+        return changed == 0 ? Outcome.GONE : Outcome.FRESH;
     }
 
     private Outcome end(SessionRecord session, String reason) {
