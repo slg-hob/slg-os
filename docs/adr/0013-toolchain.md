@@ -1,6 +1,6 @@
 # 0013. Repository layout, toolchain and CI tooling
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-19
 
 ## Context
