@@ -31,6 +31,8 @@ public class OidcClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(OidcClient.class);
 
+    private final java.util.concurrent.atomic.AtomicBoolean probeFailing = new java.util.concurrent.atomic.AtomicBoolean();
+
     private final OidcEndpoints endpoints;
     private final String clientId;
     private final String clientSecret;
@@ -108,11 +110,17 @@ public class OidcClient {
     public boolean reachable() {
         try {
             fetchJwks();
+            if (probeFailing.getAndSet(false)) {
+                LOG.info("Identity provider reachable again");
+            }
             return true;
         } catch (OidcException e) {
-            // The cause names the failing layer (DNS, TLS trust, HTTP status); no secret is part of it.
-            Throwable cause = e.getCause() == null ? e : e.getCause();
-            LOG.warn("Identity provider probe failed: {} ({}: {})", e.getMessage(), cause.getClass().getName(), cause.getMessage());
+            // Logged once per outage, not on every probe. The cause names the failing layer (DNS, TLS trust, HTTP status);
+            // no secret and no response body is part of it.
+            if (!probeFailing.getAndSet(true)) {
+                Throwable cause = e.getCause() == null ? e : e.getCause();
+                LOG.warn("Identity provider probe failed: {} ({})", e.getMessage(), cause.getClass().getName());
+            }
             return false;
         }
     }

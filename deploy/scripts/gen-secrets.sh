@@ -10,6 +10,12 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="$root/.generated"
 secrets="$out/secrets"
+if [ -e "$secrets/pg_superuser" ] && [ "${1:-}" != "--force" ]; then
+  echo "Secrets already exist in $secrets." >&2
+  echo "New values would no longer match the roles and the realm inside an existing database volume." >&2
+  echo "Run 'docker compose down -v' first and call this script with --force." >&2
+  exit 1
+fi
 mkdir -p "$secrets"
 chmod 0755 "$out" "$secrets"
 

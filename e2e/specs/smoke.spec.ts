@@ -1,5 +1,5 @@
 import { expect, test } from '../support/fixtures';
-import { REALM, SHELL, SSO, signIn } from '../support/login';
+import { REALM, SHELL, SSO, signIn, submitCredentials } from '../support/login';
 
 test.describe('smoke: sign-in, desktop placeholder and sign-out on the real stack', () => {
   test('an unauthenticated visit is redirected to the Keycloak login in German', async ({ page }) => {
@@ -80,6 +80,44 @@ test.describe('smoke: sign-in, desktop placeholder and sign-out on the real stac
     await page.locator('#kc-login').click();
     await expect(page.locator('#input-error, .kc-feedback-text, [role=alert]').first()).toBeVisible();
     expect((await context.cookies(SHELL)).some((c) => c.name === '__Host-slg-session')).toBe(false);
+  });
+
+  test('a disabled user cannot sign in and gets no session', async ({ page, context }) => {
+    await page.goto('/app/');
+    await submitCredentials(page, 'disabled');
+    await expect(page).toHaveURL(new RegExp(`^${SSO}/realms/${REALM}/`));
+    expect((await context.cookies(SHELL)).some((c) => c.name === '__Host-slg-session')).toBe(false);
+  });
+
+  test('a forged session cookie is not accepted', async ({ page, context }) => {
+    await page.goto('/core/auth/signed-out');
+    await context.addCookies([{ name: '__Host-slg-session', value: 'A'.repeat(43), url: SHELL, secure: true, httpOnly: true, sameSite: 'Strict' }]);
+    const status = await page.evaluate(async () => (await fetch('/core/api/v1/session')).status);
+    expect(status).toBe(401);
+    await page.goto('/app/');
+    await expect(page).toHaveURL(new RegExp(`^${SSO}/realms/${REALM}/protocol/openid-connect/auth`));
+  });
+
+  test('after sign-out the old session cookie is dead at the server', async ({ page, context }) => {
+    await signIn(page, 'user-a');
+    const old = (await context.cookies(SHELL)).find((c) => c.name === '__Host-slg-session');
+    expect(old).toBeDefined();
+    await page.evaluate(async () => {
+      const view = await (await fetch('/core/api/v1/session')).json();
+      await fetch('/core/auth/logout', { method: 'POST', headers: { 'X-Slg-Csrf': view.csrfToken, Accept: 'application/json' } });
+    });
+    await context.clearCookies();
+    await context.addCookies([{ name: '__Host-slg-session', value: old!.value, url: SHELL, secure: true, httpOnly: true, sameSite: 'Strict' }]);
+    const status = await page.evaluate(async () => (await fetch('/core/api/v1/session')).status);
+    expect(status).toBe(401);
+  });
+
+  test('a wrong CSRF token is refused', async ({ page }) => {
+    await signIn(page, 'user-a');
+    const status = await page.evaluate(
+      async () => (await fetch('/core/api/v1/session/touch', { method: 'POST', headers: { 'X-Slg-Csrf': 'x'.repeat(43) } })).status,
+    );
+    expect(status).toBe(403);
   });
 
   test('the shell makes no request to a third party', async ({ page }) => {

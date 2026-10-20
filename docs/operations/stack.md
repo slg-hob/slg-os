@@ -5,7 +5,7 @@ Status: milestone M2 of the walking skeleton (PRD-0003). The stack has the proxy
 ## Start for development and CI / Start für Entwicklung und CI
 
 ```bash
-deploy/scripts/gen-secrets.sh     # random secret files and the test password under deploy/.generated (never committed)
+deploy/scripts/gen-secrets.sh     # random secret files and the test password under deploy/.generated (never committed); refuses to overwrite, use --force after docker compose down -v
 deploy/scripts/test-ca.sh         # throw-away CA and the proxy certificate for shell.slg.test and sso.slg.test (needs openssl and keytool)
 echo "127.0.0.1 shell.slg.test sso.slg.test" | sudo tee -a /etc/hosts
 set -a; . deploy/.generated/e2e.env; set +a
@@ -31,3 +31,12 @@ Every container drops all capabilities, sets `no-new-privileges`, limits process
 ## Backup / Datensicherung
 
 The session table is not part of any backup; users sign in again after a restore. The backup and restore scripts follow in milestone M6c (PRD-0003 SK-17).
+
+## Known limits of the stack (M2b)
+
+- Secrets and realm settings are applied when the database volume is created (roles) and when the realm is first imported (`IGNORE_EXISTING`). Rotating them or changing the realm file on an existing volume is not supported yet; the upgrade and rotation path comes with the backup work of M6c.
+- The directory federation of the production realm is configured with `LDAP_URL`, `LDAP_BIND_DN`, `LDAP_USERS_DN` and the secret `ldap_bind_password`. The defaults are placeholders that never connect. Keycloak sits on the `egress` network so that it can reach the directory server; use `ldaps://` and put the company CA into the Keycloak trust store.
+- The TLS certificate, the CA and the trust store come from `deploy/.generated`; the test certificates expire after three days. Production mounts its own files at the same paths.
+- Host names and the realm names are fixed in `deploy/proxy/nginx.conf`; `SLG_SHELL_HOST` and `SLG_SSO_HOST` change only the aliases and the issuer, so they are meant for tests.
+- After a host reboot `depends_on` does not apply; containers that start before PostgreSQL retry until it is up.
+- Keycloak's admin console is not routed by the proxy, but the plain HTTP port of Keycloak is reachable from every container on the `backend` network. Modules are trusted, reviewed code (ADR-0007).

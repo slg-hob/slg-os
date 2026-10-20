@@ -75,15 +75,21 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: bootstrap-admin
       KC_TRUSTSTORE_PATHS: /etc/slg/ca/ca.crt
       SLG_SHELL_BASE_URL: https://${SLG_SHELL_HOST:-shell.slg.test}
+      # Active Directory federation of the production realm (deploy/keycloak/realm.json). The defaults are placeholders that
+      # never connect; the operator sets the real values (docs/operations/configuration.md).
+      LDAP_URL: ${LDAP_URL:-ldaps://directory.invalid:636}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-cn=svc-slg,dc=example,dc=invalid}
+      LDAP_USERS_DN: ${LDAP_USERS_DN:-dc=example,dc=invalid}
       JAVA_OPTS_KC_HEAP: "-XX:MaxRAMPercentage=60"
-    secrets: [kc_db_password, kc_bootstrap_admin_password, slg_core_client_secret]
+    secrets: [kc_db_password, kc_bootstrap_admin_password, slg_core_client_secret, ldap_bind_password]
     volumes:
       - ./.generated/tls/ca.crt:/etc/slg/ca/ca.crt:ro
       - ./keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
     tmpfs:
       - /tmp
       - /opt/keycloak/data/tmp
-    networks: [backend]
+    # backend has no route out; egress lets Keycloak reach the directory server (ports 389/636) of the company network.
+    networks: [backend, egress]
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -Eq '\"status\": ?\"UP\"' <&3"]
       interval: 10s
@@ -108,7 +114,8 @@ services:
       SLG_ENV: ${SLG_ENV:-production}
       SLG_SHELL_BASE_URL: https://${SLG_SHELL_HOST:-shell.slg.test}
       SLG_INTERNAL_HOSTS: core-backend
-      SLG_TRUSTED_PROXY_CIDRS: 172.29.0.0/16
+      # Only the proxy (fixed address below) may set X-Forwarded-For and the correlation id.
+      SLG_TRUSTED_PROXY_CIDRS: 172.29.0.2/32
       SLG_OIDC_ISSUER: https://${SLG_SSO_HOST:-sso.slg.test}/realms/${SLG_REALM:-slg}
       SLG_OIDC_CLIENT_SECRET_FILE: /run/secrets/slg_core_client_secret
       SLG_SESSION_VAULT_KEYS_FILE: /run/secrets/session_vault_keys
@@ -162,6 +169,7 @@ services:
     networks:
       edge: {}
       backend:
+        ipv4_address: 172.29.0.2
         aliases:
           # Inside the stack the public host names resolve to the proxy, so the core reaches Keycloak by its issuer URL.
           - ${SLG_SHELL_HOST:-shell.slg.test}
@@ -174,6 +182,7 @@ services:
 
 networks:
   edge: {}
+  egress: {}
   backend:
     internal: true
     ipam:
@@ -196,6 +205,8 @@ secrets:
     file: ./.generated/secrets/kc_bootstrap_admin_password
   slg_core_client_secret:
     file: ./.generated/secrets/slg_core_client_secret
+  ldap_bind_password:
+    file: ./.generated/secrets/ldap_bind_password
   session_vault_keys:
     file: ./.generated/secrets/session_vault_keys
   session_csrf_key:

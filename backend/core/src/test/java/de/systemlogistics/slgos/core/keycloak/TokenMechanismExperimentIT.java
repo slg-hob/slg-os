@@ -46,10 +46,18 @@ class TokenMechanismExperimentIT {
         try {
             experiment(keycloak, admin, coreId);
         } finally {
-            // The Keycloak instance is shared with the other tests: put the client back as the realm file defines it.
-            JsonNode rep = keycloak.admin("GET", "/" + REALM + "/clients/" + coreId, admin, null).json(mapper);
+            // The Keycloak instance is shared with the other tests: put the client back as the realm file defines it, with a
+            // fresh admin token because the one above may have expired during the experiment.
+            String fresh = keycloak.adminToken();
+            JsonNode rep = keycloak.admin("GET", "/" + REALM + "/clients/" + coreId, fresh, null).json(mapper);
             ((tools.jackson.databind.node.ObjectNode) rep).put("directAccessGrantsEnabled", false);
-            keycloak.admin("PUT", "/" + REALM + "/clients/" + coreId, admin, mapper.writeValueAsString(rep));
+            keycloak.admin("PUT", "/" + REALM + "/clients/" + coreId, fresh, mapper.writeValueAsString(rep));
+            JsonNode scopes = keycloak.admin("GET", "/" + REALM + "/client-scopes", fresh, null).json(mapper);
+            for (JsonNode scope : scopes) {
+                if ("reference".equals(scope.path("name").asString())) {
+                    keycloak.admin("DELETE", "/" + REALM + "/client-scopes/" + scope.path("id").asString(), fresh, null);
+                }
+            }
         }
     }
 
