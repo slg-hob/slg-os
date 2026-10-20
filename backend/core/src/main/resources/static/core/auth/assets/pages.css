@@ -1,0 +1,86 @@
+/* Pages outside the shell (sign-in interstitial, errors). Light and dark by prefers-color-scheme; AA contrast. */
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --card: #f3f4f6;
+  --border: #6b7280;
+  --link: #0b4f9e;
+  --alert-bg: #fdecea;
+  --alert-fg: #7a1010;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --fg: #f2f2f2;
+    --card: #1f2329;
+    --border: #9ca3af;
+    --link: #8ab4f8;
+    --alert-bg: #3b1616;
+    --alert-fg: #ffd6d2;
+  }
+}
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.card {
+  max-width: 28rem;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+p[role="alert"] {
+  background: var(--alert-bg);
+  color: var(--alert-fg);
+  border: 1px solid var(--alert-fg);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+a {
+  color: var(--link);
+}
+
+a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--link);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  padding: 6px 14px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (forced-colors: active) {
+  a:focus-visible, button:focus-visible {
+    outline-color: Highlight;
+  }
+}

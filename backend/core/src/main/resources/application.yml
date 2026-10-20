@@ -1,0 +1,76 @@
+# Configuration only through environment variables and secret files (PRD-0003 SK-16 AC5). The README lists every variable.
+# Secrets are never values here: the *_FILE variables name Docker secret files.
+slg:
+  env: ${SLG_ENV:dev}
+  shell-base-url: ${SLG_SHELL_BASE_URL:}
+  internal-hosts: ${SLG_INTERNAL_HOSTS:core-backend,localhost}
+  trusted-proxy-cidrs: ${SLG_TRUSTED_PROXY_CIDRS:}
+  bootstrap-admin-group: ${SLG_BOOTSTRAP_ADMIN_GROUP:}
+  oidc:
+    issuer: ${SLG_OIDC_ISSUER:}
+    client-id: ${SLG_OIDC_CLIENT_ID:slg-core}
+    client-secret-file: ${SLG_OIDC_CLIENT_SECRET_FILE:}
+    http-timeout: ${SLG_OIDC_HTTP_TIMEOUT:3s}
+  session:
+    idle-timeout: ${SLG_SESSION_IDLE_TIMEOUT:30m}
+    absolute-timeout: ${SLG_SESSION_ABSOLUTE_TIMEOUT:10h}
+    max-per-user: ${SLG_SESSION_MAX_PER_USER:10}
+    renew-margin: ${SLG_SESSION_RENEW_MARGIN:60s}
+    step-up-max-age: ${SLG_SESSION_STEP_UP_MAX_AGE:5m}
+    vault-keys-file: ${SLG_SESSION_VAULT_KEYS_FILE:}
+    vault-active-key-id: ${SLG_SESSION_VAULT_ACTIVE_KEY_ID:}
+    csrf-key-file: ${SLG_SESSION_CSRF_KEY_FILE:}
+  db:
+    url: ${SLG_DB_URL:}
+    app-user: ${SLG_DB_APP_USER:}
+    app-password-file: ${SLG_DB_APP_PASSWORD_FILE:}
+    migrator-user: ${SLG_DB_MIGRATOR_USER:}
+    migrator-password-file: ${SLG_DB_MIGRATOR_PASSWORD_FILE:}
+    pool-size: ${SLG_DB_POOL_SIZE:10}
+
+server:
+  port: 8080
+  shutdown: graceful
+  forward-headers-strategy: none
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+spring:
+  application:
+    name: slg-os-core
+  threads:
+    virtual:
+      enabled: true
+  main:
+    banner-mode: "off"
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+management:
+  server:
+    # Management endpoints listen on an internal port that the proxy does not route (PRD-0003 SK-16 AC4).
+    port: ${SLG_MANAGEMENT_PORT:8081}
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      status:
+        order: DOWN,OUT_OF_SERVICE,DEGRADED,UP,UNKNOWN
+        http-mapping:
+          DOWN: 503
+          OUT_OF_SERVICE: 503
+          DEGRADED: 200
+          UP: 200
+      group:
+        readiness:
+          include: readinessState,migration,db,oidc
+  health:
+    defaults:
+      enabled: true
