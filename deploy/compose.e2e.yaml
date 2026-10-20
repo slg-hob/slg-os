@@ -19,6 +19,8 @@ services:
       SLG_REALM: slg-e2e
       SLG_OIDC_ISSUER: https://${SLG_SSO_HOST:-sso.slg.test}/realms/slg-e2e
       SLG_BOOTSTRAP_ADMIN_GROUP: /slg-admins
+      # All test browsers share one client address; the production limit would answer 429 during the run.
+      SLG_AUTH_ATTEMPTS_PER_MINUTE: "1000"
 
   # Test directory; the federation in realm-e2e.json is switched on by the scenario that needs it (SK-18 AC1, M6a).
   ldap:
