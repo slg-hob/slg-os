@@ -150,6 +150,9 @@ services:
         condition: service_started
     ports:
       - "443:8443"
+    sysctls:
+      # Lets the unprivileged nginx bind 443 inside the container: the core calls https://sso.slg.test on the default port.
+      net.ipv4.ip_unprivileged_port_start: 443
     volumes:
       - ./proxy/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./proxy/slg-proxy-headers.conf:/etc/nginx/slg-proxy-headers.conf:ro
