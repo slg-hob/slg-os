@@ -247,6 +247,15 @@ jobs:
         run: |
           set -a; . deploy/.generated/e2e.env; set +a
           docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml up -d --build --wait --wait-timeout 420
+      - name: Wait until sign-in works through the proxy
+        run: |
+          # Keycloak reports ready before it serves the realm keys; the core re-checks every 10 s and answers 503 until then.
+          for i in $(seq 1 60); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --cacert deploy/.generated/tls/ca.crt 'https://shell.slg.test/core/auth/login?return=%2Fapp%2F' || true)"
+            if [ "$code" = "302" ] || [ "$code" = "303" ]; then exit 0; fi
+            sleep 3
+          done
+          echo "::error::sign-in is still unavailable after 3 minutes (last status $code)"; exit 1
       - name: Install the e2e dependencies and the browser
         working-directory: e2e
         run: |
