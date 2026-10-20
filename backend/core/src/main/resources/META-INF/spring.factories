@@ -1,0 +1,4 @@
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+de.systemlogistics.slgos.core.config.ConfigurationFailureAnalyzer
+org.springframework.context.ApplicationListener=\
+de.systemlogistics.slgos.core.config.ConfigurationCheck

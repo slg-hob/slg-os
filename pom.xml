@@ -27,12 +27,30 @@
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jacoco.version>0.8.15</jacoco.version>
+    <!-- Not managed by Spring Boot; pinned here (PRD-0003 SK-1 AC2 covers the toolchain, these are library versions). -->
+    <nimbus-jose-jwt.version>10.10</nimbus-jose-jwt.version>
+    <archunit.version>1.5.1</archunit.version>
     <!-- Coverage gates (PRD-0001 NFR-2, PRD-0003 SK-2). Never lower these values. -->
     <coverage.line.minimum>0.80</coverage.line.minimum>
     <coverage.critical.minimum>0.90</coverage.critical.minimum>
     <!-- Entry points without logic are excluded from the measurement; every entry needs a reason here. -->
     <coverage.excludes>**/*Application.class</coverage.excludes>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.nimbusds</groupId>
+        <artifactId>nimbus-jose-jwt</artifactId>
+        <version>${nimbus-jose-jwt.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${archunit.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>
