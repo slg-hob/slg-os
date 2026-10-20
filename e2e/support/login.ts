@@ -1,4 +1,5 @@
-import { expect, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect } from './fixtures';
 
 export const SHELL = 'https://shell.slg.test';
 export const SSO = 'https://sso.slg.test';

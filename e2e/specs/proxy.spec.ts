@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../support/fixtures';
 import { REALM, SHELL, SSO } from '../support/login';
 
 /** Only login, logout, token and well-known paths of Keycloak are public; the internal tree of the core is not (SK-15 AC1, SK-3 AC5). */

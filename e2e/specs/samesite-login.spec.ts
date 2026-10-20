@@ -1,4 +1,5 @@
-import { expect, test, type Request } from '@playwright/test';
+import type { Request } from '@playwright/test';
+import { expect, test } from '../support/fixtures';
 import { REALM, SHELL, SSO, submitCredentials } from '../support/login';
 
 /**

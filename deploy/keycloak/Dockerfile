@@ -8,6 +8,7 @@ RUN /opt/keycloak/bin/kc.sh build
 
 FROM quay.io/keycloak/keycloak:26.8.1@sha256:79c623a22abacf3fe6c00a5fb30f5b7843d717b234033b80995891c06116d244
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
-COPY --chmod=0755 entrypoint.sh /opt/keycloak/slg-entrypoint.sh
-ENTRYPOINT ["/opt/keycloak/slg-entrypoint.sh"]
+COPY entrypoint.sh /opt/keycloak/slg-entrypoint.sh
+# Started through bash so no executable bit is needed (works with and without BuildKit).
+ENTRYPOINT ["/bin/bash", "/opt/keycloak/slg-entrypoint.sh"]
 CMD ["start", "--optimized", "--import-realm"]

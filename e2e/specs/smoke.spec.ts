@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../support/fixtures';
 import { REALM, SHELL, SSO, signIn } from '../support/login';
 
 test.describe('smoke: sign-in, desktop placeholder and sign-out on the real stack', () => {
@@ -9,13 +9,12 @@ test.describe('smoke: sign-in, desktop placeholder and sign-out on the real stac
     await expect(page.locator('#password')).toBeVisible();
   });
 
-  test('the Keycloak login page renders in English when the browser asks for it', async ({ browser }) => {
-    const context = await browser.newContext({ locale: 'en-US' });
+  test('the Keycloak login page renders in English when the browser asks for it', async ({ newContext }) => {
+    const context = await newContext({ locale: 'en-US' });
     const page = await context.newPage();
     await page.goto('/app/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('#kc-login')).toBeVisible();
-    await context.close();
   });
 
   test('sign-in ends on the desktop placeholder with a hardened session cookie', async ({ page, context }) => {
