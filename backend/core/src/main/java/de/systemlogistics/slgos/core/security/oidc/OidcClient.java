@@ -17,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -26,6 +28,8 @@ import tools.jackson.databind.json.JsonMapper;
  * classified so callers know whether a refresh token may have been consumed (see {@link OidcException.Kind}).
  */
 public class OidcClient {
+
+    private static final Logger LOG = LoggerFactory.getLogger(OidcClient.class);
 
     private final OidcEndpoints endpoints;
     private final String clientId;
@@ -106,6 +110,9 @@ public class OidcClient {
             fetchJwks();
             return true;
         } catch (OidcException e) {
+            // The cause names the failing layer (DNS, TLS trust, HTTP status); no secret is part of it.
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            LOG.warn("Identity provider probe failed: {} ({}: {})", e.getMessage(), cause.getClass().getName(), cause.getMessage());
             return false;
         }
     }
