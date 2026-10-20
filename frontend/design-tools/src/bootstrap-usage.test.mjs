@@ -12,10 +12,15 @@ describe('findUnmappedBootstrapVariables', () => {
   });
 
   it('names the file and the variable once even when it is used twice', () => {
-    const files = [{ path: 'a.tsx', text: "x('--bs-tooltip-bg'); y('--bs-tooltip-bg'); z('--bs-body-bg')" }];
+    const files = [{ path: 'a.tsx', text: "x('var(--bs-tooltip-bg)'); y('var( --bs-tooltip-bg)'); z('var(--bs-body-bg)')" }];
     expect(findUnmappedBootstrapVariables(files, mapped)).toEqual([
       'a.tsx: --bs-tooltip-bg is used but not mapped to a --slg-* token in design/bootstrap-map.json',
     ]);
+  });
+
+  it('does not count a declaration of a component-scoped variable as a use', () => {
+    const files = [{ path: 'a.css', text: '.btn-primary { --bs-btn-bg: var(--slg-primary); }' }];
+    expect(findUnmappedBootstrapVariables(files, mapped)).toEqual([]);
   });
 
   it('ignores files without Bootstrap variables', () => {

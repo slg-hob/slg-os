@@ -51,6 +51,7 @@
       "properties": {
         "name": { "$ref": "#/$defs/name" },
         "px": { "type": "integer", "minimum": 0, "maximum": 9999 },
+        "rem": { "type": "boolean" },
         "usage": { "$ref": "#/$defs/usage" }
       }
     },
@@ -84,7 +85,7 @@
         "id": { "$ref": "#/$defs/name" },
         "fg": { "type": "string", "pattern": "^(--bs-)?[a-z][a-z0-9-]*$" },
         "bg": { "type": "string", "pattern": "^(--bs-)?[a-z][a-z0-9-]*$" },
-        "role": { "type": "string", "enum": ["text", "large-text", "ui", "hairline", "disabled"] },
+        "role": { "type": "string", "enum": ["text", "text-enhanced", "large-text", "ui", "hairline", "disabled"] },
         "over": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
         "modes": { "type": "array", "minItems": 1, "items": { "type": "string", "enum": ["light", "dark", "light-hc", "dark-hc"] } }
       }

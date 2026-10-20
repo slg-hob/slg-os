@@ -39,6 +39,24 @@ describe('buildStyles', () => {
     expect(css).toMatch(/--bs-font-sans-serif:\s*"Source Sans 3 Variable"/);
   });
 
+  it('appends the token-driven overrides last: outline focus ring, control border, solid cards, primary states', () => {
+    const overrides = css.indexOf(':root :is(.btn,');
+    expect(overrides).toBeGreaterThan(css.indexOf('--bs-body-bg: var(--slg-surface-canvas)'));
+    expect(css).toMatch(/outline:\s*var\(--slg-focus-ring-width\) solid var\(--slg-focus-ring\)/);
+    expect(css).toMatch(/:root :is\(\.form-control, \.form-select\)\s*\{\s*border-color:\s*var\(--slg-control-border\)/);
+    expect(css).toMatch(/:root \.card\s*\{\s*--bs-card-bg:\s*var\(--slg-surface-raised\)/);
+    expect(css).toMatch(/--bs-btn-active-bg:\s*var\(--slg-primary-pressed\)/);
+    expect(css).toMatch(/--bs-btn-disabled-opacity:\s*1;/);
+  });
+
+  it('uses dark text for active components because white fails 4.5:1 on the brand colour', () => {
+    expect(css).toMatch(/--bs-dropdown-link-active-color:\s*#262626/);
+  });
+
+  it('does not remap the status fills, whose label colours Bootstrap derives from the light values', () => {
+    expect(css).not.toMatch(/--bs-(success|danger|warning)(-rgb)?:\s*var\(--slg-/);
+  });
+
   it('stays inside the size budget and free of forbidden URLs', () => {
     expect(checkBudget(css)).toBeUndefined();
     expect(findForbiddenUrls(css)).toEqual([]);
@@ -50,6 +68,7 @@ describe('findForbiddenUrls', () => {
   it.each([
     ['a data URL', '.a{background:url("data:image/svg+xml,%3csvg")}', /data: URL/],
     ['an unquoted data URL', '.a{background:url(data:image/png;base64,AAAA)}', /data: URL/],
+    ['an http URL', '.a{background:url(http://example.org/a.png)}', /network URL/],
     ['an https URL', '.a{background:url(https://example.org/a.png)}', /network URL/],
     ['a protocol-relative URL', ".a{background:url('//cdn.example.org/a.png')}", /network URL/],
     ['an imported URL', '@import url("https://fonts.example.org/a.css");', /network URL|imports a network URL/],
@@ -72,5 +91,12 @@ describe('checkBudget', () => {
     const noisy = Array.from({ length: 4000 }, (_, i) => `.c${i}{margin:${i}px ${(i * 7919) % 1000}px}`).join('');
     expect(checkBudget(noisy, 1)).toMatch(/KB gzip, budget is 1 KB/);
     expect(checkBudget('.a{color:red}', 1)).toBeUndefined();
+  });
+
+  it('accepts a stylesheet whose gzip size equals the budget exactly and rejects one byte more', () => {
+    const css = '.a{color:red}';
+    const size = gzipSize(css);
+    expect(checkBudget(css, size / 1024)).toBeUndefined();
+    expect(checkBudget(css, (size - 1) / 1024)).toMatch(/budget is/);
   });
 });

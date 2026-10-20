@@ -12,6 +12,8 @@ const FORCED = ':root:not([data-bs-theme="dark"]),\n[data-bs-theme="light"],\n[d
 
 const rem = (px) => `${Number((px / 16).toFixed(4))}rem`;
 const pxValue = (px) => `${px}px`;
+/** A size in px, or in rem when the entry says so, so that it follows the user's text size. */
+const sizeValue = (e) => (e.rem ? rem(e.px) : pxValue(e.px));
 const channels = (value) => {
   const { r, g, b } = parseColor(value);
   return `${r}, ${g}, ${b}`;
@@ -50,15 +52,20 @@ export function generateTokensCss(sources) {
   }
   for (const s of sources.space) fixed.push(`  --slg-${s.name}: ${rem(s.px)};`);
   for (const r of sources.radius) fixed.push(`  --slg-${r.name}: ${pxValue(r.px)};`);
-  for (const s of sources.size) fixed.push(`  --slg-${s.name}: ${pxValue(s.px)};`);
+  for (const s of sources.size) fixed.push(`  --slg-${s.name}: ${sizeValue(s)};`);
   for (const m of sources.motion) fixed.push(`  --slg-${m.name}: ${m.value};`);
 
   const out = [`/* ${GENERATED_HEADER} */`];
   out.push(block(LIGHT, ['  color-scheme: light;', ...fixed, ...themeDeclarations(sources, (c) => c.light, (s) => s.light)]));
   out.push(block(DARK, ['  color-scheme: dark;', ...themeDeclarations(sources, (c) => c.dark, (s) => s.dark)]));
+  // High contrast also removes translucency and shadows (VL-2 AC6): glass becomes its solid fallback.
+  const hcShared = [];
+  const names = new Set(sources.color.map((c) => c.name));
+  if (names.has('surface-glass') && names.has('surface-glass-solid')) hcShared.push('  --slg-surface-glass: var(--slg-surface-glass-solid);');
+  for (const s of sources.shadow) hcShared.push(`  --slg-${s.name}: none;`);
   out.push(`@media (prefers-contrast: more) {\n${[
-    block(HC_LIGHT, themeDeclarations(sources, (c) => c.lightHc, () => undefined), '  '),
-    block(DARK, themeDeclarations(sources, (c) => c.darkHc, () => undefined), '  '),
+    block(HC_LIGHT, [...hcShared, ...themeDeclarations(sources, (c) => c.lightHc, () => undefined)], '  '),
+    block(DARK, [...hcShared, ...themeDeclarations(sources, (c) => c.darkHc, () => undefined)], '  '),
   ].join('\n')}\n}`);
   const forced = [];
   for (const c of sources.color) if (c.forced) forced.push(`  --slg-${c.name}: ${c.forced};`);
@@ -101,7 +108,7 @@ export function generateTypeScript(sources) {
   const named = (key, field) => sources[key].map((e) => `  '${e.name}': '${field(e)}',`);
   lines.push('export const spaceTokens = {', ...named('space', (e) => rem(e.px)), '} as const;', '');
   lines.push('export const radiusTokens = {', ...named('radius', (e) => pxValue(e.px)), '} as const;', '');
-  lines.push('export const sizeTokens = {', ...named('size', (e) => pxValue(e.px)), '} as const;', '');
+  lines.push('export const sizeTokens = {', ...named('size', sizeValue), '} as const;', '');
   lines.push('export const motionTokens = {', ...named('motion', (e) => e.value), '} as const;', '');
   lines.push('export const typeScale = {');
   for (const t of sources.type.filter((e) => e.kind === 'scale')) {

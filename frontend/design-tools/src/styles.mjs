@@ -47,8 +47,10 @@ export function buildStyles(packageDir) {
     silenceDeprecations: SILENCED,
   });
   const read = (name) => readFileSync(join(packageDir, 'src/generated', name), 'utf8');
-  // Order matters: tokens, then Bootstrap (which declares --bs-*), then the mapping that overrides them from the tokens.
-  const css = [read('tokens.css'), compiled.css, read('bootstrap-map.css')].join('\n');
+  // Order matters: tokens, then Bootstrap (which declares --bs-*), then the mapping that overrides them from the tokens,
+  // then the token-driven component overrides.
+  const overrides = readFileSync(join(packageDir, 'src/styles/overrides.css'), 'utf8');
+  const css = [read('tokens.css'), compiled.css, read('bootstrap-map.css'), overrides].join('\n');
   const file = join(packageDir, 'dist/design-system.css');
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, css);

@@ -36,6 +36,11 @@ describe('module stylelint config', () => {
     ['data URL', ".a { background: url('data:image/png;base64,AAAA'); }", /data: URLs/],
     ['external URL', '.a { background: url(https://example.org/x.png); }', /network requests/],
     ['import', '@import "other.css";', /@import/],
+    ['protocol-relative URL', '.a { background: url(//evil.example/x.png); }', /protocol-relative/],
+    ['quoted protocol-relative URL', ".a { background: url('//evil.example/x.png'); }", /protocol-relative/],
+    ['ftp URL', '.a { background: url(ftp://evil.example/x.png); }', /protocol-relative/],
+    ['image-set with a bare string', '.a { background-image: image-set("https://evil.example/x.png" 1x); }', /image-set/],
+    ['disabled by a comment', '/* stylelint-disable */\n.a { color: #fff !important; }', /Raw colours/],
   ])('rejects %s', async (_label, css, message) => {
     const texts = await warnings(css);
     expect(texts.length).toBeGreaterThan(0);

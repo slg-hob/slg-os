@@ -41,6 +41,16 @@ describe('module design rules', () => {
     ['password input through setAttribute', "i.setAttribute('type', 'password');", /password/],
     ['password input through assignment', "i.type = 'password';", /password/],
     ['password input through createElement props', "h('input', { type: 'password' });", /password/],
+    ['password input in an expression container', "const a = <input type={'password'} />;", /password/],
+    ['password input in a template', 'const a = <input type={`password`} />;', /password/],
+    ['password input in upper case', 'const a = <input type="PASSWORD" />;', /password/],
+    ['password input chosen by a condition', "const a = <input type={x ? 'password' : 'text'} />;", /password/],
+    ['style element in upper case', "document.createElement('STYLE');", /Style elements/],
+    ['style attribute in upper case', "el.setAttribute('STYLE', 'a:b');", /Inline styles/],
+    ['dangerouslySetInnerHTML', 'const a = <div dangerouslySetInnerHTML={{ __html: x }} />;', /Raw HTML/],
+    ['innerHTML', "el.innerHTML = '<b>x</b>';", /Raw HTML/],
+    ['outerHTML', "el.outerHTML = '<b>x</b>';", /Raw HTML/],
+    ['insertAdjacentHTML', "el.insertAdjacentHTML('beforeend', x);", /Raw HTML/],
     ['shell dialog class', 'const a = <div className="slg-shell-dialog" />;', /reserved/],
     ['shell class among others', 'const a = <div className={`box slg-shell-notice`} />;', /reserved/],
     ['glass class', 'const a = <div className="slg-glass pane" />;', /Glass is chrome/],
@@ -59,6 +69,11 @@ describe('module design rules', () => {
     ['the glass word in another class', "const a = 'slg-glassy';"],
   ])('does not flag %s', (_label, code) => {
     expect(lint(code)).toEqual([]);
+  });
+
+  it('cannot be switched off with an inline directive', () => {
+    const code = "// eslint-disable-next-line no-restricted-syntax\nconst c = '#00aeef';\n/* eslint-disable */\nconst d = 'rgb(0, 0, 0)';";
+    expect(lint(code).filter((m) => /Raw colours/.test(m))).toHaveLength(2);
   });
 
   it('ignores test files by default and honours extra selectors', () => {

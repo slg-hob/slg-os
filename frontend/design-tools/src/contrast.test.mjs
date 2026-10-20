@@ -50,7 +50,16 @@ describe('contrast maths', () => {
   it('composites with the sRGB alpha formula and refuses a translucent background', () => {
     expect(composite(parseColor('rgba(255, 255, 255, 0.5)'), parseColor('#000000'))).toEqual({ r: 128, g: 128, b: 128, a: 1 });
     expect(composite(parseColor('#336699'), parseColor('#000000'))).toEqual({ r: 51, g: 102, b: 153, a: 1 });
-    expect(() => composite(parseColor('#fff'.padEnd(7, 'f')), parseColor('rgba(0,0,0,0.5)'))).toThrow(/opaque/);
+    expect(() => composite(parseColor('#ffffff'), parseColor('rgba(0,0,0,0.5)'))).toThrow(/opaque/);
+  });
+
+  it('uses the linear segment of the sRGB curve for very dark channels', () => {
+    expect(luminance({ r: 10, g: 10, b: 10 })).toBeCloseTo(10 / 255 / 12.92, 6);
+  });
+
+  it('checks every channel against 255', () => {
+    expect(() => parseColor('rgb(0, 0, 256)')).toThrow(/out of range/);
+    expect(() => parseColor('rgb(0, 256, 0)')).toThrow(/out of range/);
   });
 });
 
@@ -120,6 +129,35 @@ describe('evaluatePairs', () => {
     expect(evaluatePairs(lighter, [{ id: 'x', fg: 'a', bg: 'b', role: 'text', modes: ['light'] }])[0].pass).toBe(false);
     expect(evaluatePairs(lighter, [{ id: 'x', fg: 'a', bg: 'b', role: 'ui', modes: ['light'] }])[0].pass).toBe(true);
     expect(asUi[0].threshold).toBe(ROLE_THRESHOLDS.ui);
+  });
+
+  it('passes a pair exactly at its threshold and fails one just below', () => {
+    const at = new Map([['a', { light: '#767676', dark: '#767676' }], ['b', { light: '#ffffff', dark: '#ffffff' }]]);
+    const ratio = contrastRatio(parseColor('#767676'), parseColor('#ffffff'));
+    const exact = { ...ROLE_THRESHOLDS };
+    expect(ratio).toBeGreaterThan(exact.text); // 4.54: just above
+    const [result] = evaluatePairs(at, [{ id: 'x', fg: 'a', bg: 'b', role: 'text', modes: ['light'] }]);
+    expect(result.pass).toBe(true);
+    const grey = new Map([['a', { light: '#777777', dark: '#777777' }], ['b', { light: '#ffffff', dark: '#ffffff' }]]);
+    const [below] = evaluatePairs(grey, [{ id: 'x', fg: 'a', bg: 'b', role: 'text', modes: ['light'] }]);
+    expect(below.ratio).toBeLessThan(exact.text); // 4.48: just below
+    expect(below.pass).toBe(false);
+  });
+
+  it('defines the thresholds of the roles', () => {
+    expect(ROLE_THRESHOLDS).toEqual({ text: 4.5, 'text-enhanced': 7.7, 'large-text': 3, ui: 3, hairline: 1.5, disabled: 1.5 });
+  });
+
+  it('evaluates a pair only in the modes it names', () => {
+    const results = evaluatePairs(colors, [pair({ id: 'dark-only', modes: ['dark'] })]);
+    expect(results.map((r) => r.mode)).toEqual(['dark']);
+  });
+
+  it('enforces the enhanced threshold of the status pairs', () => {
+    const weak = new Map(colors);
+    weak.set('status-warning-text', { ...colors.get('status-warning-text'), light: '#8a4b00' });
+    const failures = formatFailures(evaluatePairs(weak, allPairs(sources)));
+    expect(failures.join('\n')).toMatch(/status-warning \[light\].*needs 7\.7:1 \(text-enhanced\)/);
   });
 
   it('falls back to the base value in high-contrast modes without an override', () => {

@@ -14,7 +14,8 @@ describe('design system', () => {
   it('exposes the space, radius, size and type scales', () => {
     expect(Object.values(spaceTokens)).toEqual(['0.25rem', '0.5rem', '0.75rem', '1rem', '1.5rem', '2rem', '3rem']);
     expect(radiusTokens['radius-pill']).toBe('9999px');
-    expect(sizeTokens['top-bar-height']).toBe('44px');
+    expect(sizeTokens['top-bar-height']).toBe('2.75rem');
+    expect(sizeTokens['focus-ring-width']).toBe('2px');
     expect(typeScale.body).toEqual({ size: '1rem', line: '1.5rem', weight: 400 });
   });
 

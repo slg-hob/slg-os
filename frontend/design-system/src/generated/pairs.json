@@ -198,36 +198,36 @@
     "id": "status-default",
     "foreground": "--slg-status-default-text",
     "background": "--slg-status-default-bg",
-    "role": "text",
-    "threshold": 4.5
+    "role": "text-enhanced",
+    "threshold": 7.7
   },
   {
     "id": "status-success",
     "foreground": "--slg-status-success-text",
     "background": "--slg-status-success-bg",
-    "role": "text",
-    "threshold": 4.5
+    "role": "text-enhanced",
+    "threshold": 7.7
   },
   {
     "id": "status-warning",
     "foreground": "--slg-status-warning-text",
     "background": "--slg-status-warning-bg",
-    "role": "text",
-    "threshold": 4.5
+    "role": "text-enhanced",
+    "threshold": 7.7
   },
   {
     "id": "status-danger",
     "foreground": "--slg-status-danger-text",
     "background": "--slg-status-danger-bg",
-    "role": "text",
-    "threshold": 4.5
+    "role": "text-enhanced",
+    "threshold": 7.7
   },
   {
     "id": "status-neutral",
     "foreground": "--slg-status-neutral-text",
     "background": "--slg-status-neutral-bg",
-    "role": "text",
-    "threshold": 4.5
+    "role": "text-enhanced",
+    "threshold": 7.7
   },
   {
     "id": "solid-danger",

@@ -62,14 +62,14 @@ export const radiusTokens = {
 } as const;
 
 export const sizeTokens = {
-  'top-bar-height': '44px',
-  'window-titlebar-height': '48px',
-  'control-height': '36px',
-  'target-min': '24px',
-  'target-min-narrow': '44px',
-  'tab-min-width': '96px',
-  'tab-max-width': '200px',
-  'main-menu-width': '352px',
+  'top-bar-height': '2.75rem',
+  'window-titlebar-height': '3rem',
+  'control-height': '2.25rem',
+  'target-min': '1.5rem',
+  'target-min-narrow': '2.75rem',
+  'tab-min-width': '6rem',
+  'tab-max-width': '12.5rem',
+  'main-menu-width': '22rem',
   'focus-ring-width': '2px',
   'focus-ring-offset': '2px',
   'glass-blur': '18px',

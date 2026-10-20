@@ -32,10 +32,12 @@
 @media (prefers-contrast: more) {
   :root:not([data-bs-theme="dark"]),
   [data-bs-theme="light"] {
+    --slg-shadow-1: none;
     --slg-ink: #000000;
     --slg-ink-rgb: 0, 0, 0;
   }
   [data-bs-theme="dark"] {
+    --slg-shadow-1: none;
     --slg-ink: #ffffff;
     --slg-ink-rgb: 255, 255, 255;
   }

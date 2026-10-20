@@ -4,6 +4,7 @@
 /** Minimum contrast ratio per pair role. Roles are fixed here so a pair list cannot lower its own threshold. */
 export const ROLE_THRESHOLDS = Object.freeze({
   text: 4.5,
+  'text-enhanced': 7.7,
   'large-text': 3,
   ui: 3,
   hairline: 1.5,

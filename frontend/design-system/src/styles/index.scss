@@ -25,6 +25,7 @@ $link-color-dark: map.get($slg-dark, 'link');
 $border-color: map.get($slg-light, 'divider');
 $border-color-dark: map.get($slg-dark, 'divider');
 $color-contrast-dark: map.get($slg-light, 'on-primary');
+$component-active-color: map.get($slg-light, 'on-primary');
 
 $font-family-sans-serif: string.unquote(map.get(t.$slg-fonts, 'font-sans'));
 $font-family-monospace: string.unquote(map.get(t.$slg-fonts, 'font-mono'));

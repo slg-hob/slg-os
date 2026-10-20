@@ -62,6 +62,21 @@ describe('validateSources', () => {
     expect(problemsFor((s) => s.type.push({ ...s.type.find((t) => t.kind === 'scale') }))).toContain('tokens/type.json: duplicate type scale name');
   });
 
+  it('reports a malformed high-contrast value', () => {
+    expect(problemsFor((s) => { s.color[7].lightHc = 'rgba(0, 0, 999, 1)'; }).join('\n')).toMatch(/color\.json: divider\.lightHc: colour channel out of range/);
+    expect(problemsFor((s) => { s.color[7].darkHc = 'rgba(0, 0, 999, 1)'; }).join('\n')).toMatch(/divider\.darkHc/);
+  });
+
+  it('allows a type scale entry to share its name with a token of another kind', () => {
+    expect(problemsFor((s) => { s.type.find((t) => t.kind === 'scale').name = 'space-1'; })).toEqual([]);
+  });
+
+  it('carries over and modes from Bootstrap pairs to the derived token pairs', () => {
+    const { sources } = fresh();
+    sources.bootstrap.pairs.push({ id: 'bs-x', fg: '--bs-body-color', bg: '--bs-body-bg', role: 'text', modes: ['dark'], over: ['black'] });
+    expect(bootstrapTokenPairs(sources).find((p) => p.id === 'bs-x')).toMatchObject({ modes: ['dark'], over: ['black'] });
+  });
+
   it('reports a missing required colour (removing a token is breaking)', () => {
     const problems = problemsFor((s) => { s.color = s.color.filter((c) => c.name !== 'focus-ring'); });
     expect(problems).toContain('tokens/color.json: required token "focus-ring" is missing');

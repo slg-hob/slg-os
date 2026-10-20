@@ -47,7 +47,7 @@ npm run test:coverage                           # Vitest with coverage gate (80 
 npm run test -w @slg-os/shell -- src/App.test.tsx   # a single test file
 npm run build
 npm run tokens:generate                         # design tokens (design/tokens/*.json) -> design-system/src/generated/ (commit the result)
-npm run tokens:check && npm run contrast        # tokens-sync and the contrast check of every declared pair (CI job design)
+npm run tokens:check && npm run contrast        # tokens-sync (also fails on an unmapped var(--bs-*) in shell/design-system) and the contrast check (CI job design)
 npm run assets:check                            # docs/design/assets.lock: hashes, licence allowlist, THIRD-PARTY-NOTICES
 npm run lint:css                                # Stylelint (part of npm run lint)
 

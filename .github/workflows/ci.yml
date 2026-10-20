@@ -148,6 +148,8 @@ jobs:
         run: npm run contrast
       - name: Asset hashes, licences and third-party notices
         run: npm run assets:check
+      - name: Stylesheet builds (Bootstrap from SCSS), no data or network URLs, gzip budget
+        run: npm run build -w @slg-os/design-system
 
   coverage:
     name: Coverage regression (2-point limit)

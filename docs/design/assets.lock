@@ -18,6 +18,7 @@
   "licenceExceptions": [
     {
       "package": "svg-tags",
+      "version": "1.0.0",
       "licence": "MIT",
       "reason": "Transitive dependency of stylelint. Its package.json declares no licence field; the LICENSE file in the package is the MIT licence (SHA-256 4fa26a349d96c6bf268296011d84a70d18a1e85dfbef9a3c3f785c97e28d1f5d)."
     }

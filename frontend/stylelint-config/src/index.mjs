@@ -13,7 +13,17 @@ const sharedRules = {
   'declaration-no-important': [true, { message: '!important is not allowed.' }],
   'function-url-scheme-disallowed-list': [['data', 'http', 'https'], { message: 'No data: URLs and no network requests (CSP, no external runtime dependencies).' }],
   'at-rule-disallowed-list': [['import'], { message: '@import is not allowed; compose styles in the build.' }],
-  'declaration-property-value-disallowed-list': [{ '/.*/': ['/var\\(\\s*--bs-/'] }, { message: 'Use --slg-* tokens, not --bs-* variables.' }],
+  'declaration-property-value-disallowed-list': [
+    {
+      '/.*/': [
+        '/var\\(\\s*--bs-/',
+        // any URL with a scheme or a protocol-relative URL, and image-set() which accepts bare strings
+        '/url\\(\\s*["\']?\\s*(?:\\/\\/|[a-z][a-z0-9+.-]*:)/i',
+        '/image-set\\(/i',
+      ],
+    },
+    { message: 'Use --slg-* tokens, not --bs-* variables; no network, data: or protocol-relative URLs, no image-set().' },
+  ],
 };
 
 const globalSelectorRules = {
@@ -24,6 +34,7 @@ const globalSelectorRules = {
 
 /** Strict rules for module code. */
 export const moduleConfig = {
+  ignoreDisables: true, // "stylelint-disable" comments cannot switch the rules off in module code
   rules: {
     ...sharedRules,
     ...globalSelectorRules,

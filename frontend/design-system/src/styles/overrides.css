@@ -1,0 +1,66 @@
+/*
+ * Token-driven overrides of Bootstrap component defaults that Sass variables cannot theme at run time (ADR-0023).
+ * Appended after Bootstrap by the style build. Each selector starts with :root to win over Bootstrap's own
+ * selectors without !important. Everything here reads --slg-* tokens, so light, dark, high contrast and forced
+ * colours follow without a rebuild.
+ */
+
+/* One focus indicator for all components (VL-10 AC6): 2 px ring with 2 px offset, drawn as an outline so that
+   it survives forced colours (Bootstrap's glow is a box-shadow, which forced colours removes). */
+:root :is(.btn, .btn-close, .page-link, .nav-link, .dropdown-item, .list-group-item-action, .accordion-button, .navbar-toggler):focus-visible,
+:root .btn-check:focus-visible + .btn,
+:root :is(.form-control, .form-select, .form-check-input, .form-range):focus {
+  outline: var(--slg-focus-ring-width) solid var(--slg-focus-ring);
+  outline-offset: var(--slg-focus-ring-offset);
+  box-shadow: none;
+}
+
+/* Control boundaries use the control-border token (3:1 against the surface), not the decorative divider. */
+:root :is(.form-control, .form-select) {
+  border-color: var(--slg-control-border);
+}
+
+:root .form-check-input {
+  --bs-border-color: var(--slg-control-border);
+}
+
+/* Content surfaces are solid raised surfaces, not the canvas (VL-8 AC2). */
+:root .card {
+  --bs-card-bg: var(--slg-surface-raised);
+}
+
+:root .modal {
+  --bs-modal-bg: var(--slg-surface-raised);
+}
+
+:root .dropdown-menu {
+  --bs-dropdown-bg: var(--slg-surface-raised);
+}
+
+:root .list-group {
+  --bs-list-group-bg: var(--slg-surface-raised);
+}
+
+/* Primary button states come from the tokens (VL-2 AC4): dark label, defined hover, pressed and disabled fills. */
+:root .btn-primary {
+  --bs-btn-color: var(--slg-on-primary);
+  --bs-btn-bg: var(--slg-primary);
+  --bs-btn-border-color: var(--slg-primary);
+  --bs-btn-hover-color: var(--slg-on-primary);
+  --bs-btn-hover-bg: var(--slg-primary-hover);
+  --bs-btn-hover-border-color: var(--slg-primary-hover);
+  --bs-btn-active-color: var(--slg-on-primary);
+  --bs-btn-active-bg: var(--slg-primary-pressed);
+  --bs-btn-active-border-color: var(--slg-primary-pressed);
+  --bs-btn-disabled-color: var(--slg-on-primary-disabled);
+  --bs-btn-disabled-bg: var(--slg-primary-disabled);
+  --bs-btn-disabled-border-color: var(--slg-primary-disabled);
+  --bs-btn-disabled-opacity: 1;
+}
+
+/* A primary button gets a boundary in forced colours (VL-2 AC4). */
+@media (forced-colors: active) {
+  :root .btn-primary {
+    border: 1px solid CanvasText;
+  }
+}

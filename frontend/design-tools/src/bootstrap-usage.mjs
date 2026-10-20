@@ -29,7 +29,8 @@ export function readSources(dir) {
 export function findUnmappedBootstrapVariables(files, mapped) {
   const problems = [];
   for (const { path, text } of files) {
-    for (const name of new Set(text.match(/--bs-[a-z0-9-]+/g) ?? [])) {
+    // only reads (var(--bs-x)) count: declaring a component-scoped --bs-btn-* variable is how Bootstrap is themed
+    for (const name of new Set([...text.matchAll(/var\(\s*(--bs-[a-z0-9-]+)/g)].map((m) => m[1]))) {
       if (!mapped.has(name)) problems.push(`${path}: ${name} is used but not mapped to a --slg-* token in design/bootstrap-map.json`);
     }
   }

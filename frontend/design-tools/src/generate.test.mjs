@@ -60,6 +60,20 @@ describe('the committed generated files', () => {
     expect(css).toContain('--slg-shadow-2: none;');
   });
 
+  it('give layout sizes in rem so they follow the text size, and keep the focus ring in px', () => {
+    const css = generateAll(sources).get('src/generated/tokens.css');
+    expect(css).toContain('--slg-top-bar-height: 2.75rem;');
+    expect(css).toContain('--slg-control-height: 2.25rem;');
+    expect(css).toContain('--slg-focus-ring-width: 2px;');
+  });
+
+  it('replace glass and shadows by their solid fallbacks under high contrast', () => {
+    const css = generateAll(sources).get('src/generated/tokens.css');
+    const hc = css.slice(css.indexOf('@media (prefers-contrast: more)'), css.indexOf('@media (forced-colors'));
+    expect(hc.match(/--slg-surface-glass: var\(--slg-surface-glass-solid\);/g)).toHaveLength(2);
+    expect(hc.match(/--slg-shadow-[123]: none;/g)).toHaveLength(6);
+  });
+
   it('map the Bootstrap variables to tokens only', () => {
     const css = generateAll(sources).get('src/generated/bootstrap-map.css');
     const declarations = css.split('\n').filter((l) => l.includes('--bs-') && l.includes(':'));
