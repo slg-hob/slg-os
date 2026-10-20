@@ -3,17 +3,5 @@
     "title": "SLG OS",
     "loading": "Loading",
     "welcome": "Welcome, {name}"
-  },
-  "errors": {
-    "AUTH_UNAVAILABLE": "The sign-in service is currently unavailable.",
-    "BAD_REQUEST": "The request was not valid.",
-    "CSRF": "The request was rejected for security reasons. Please reload the page.",
-    "FORBIDDEN": "You do not have permission for this.",
-    "INTERNAL_ERROR": "An internal error occurred.",
-    "MISDIRECTED_HOST": "This address is not served.",
-    "NOT_FOUND": "Not found.",
-    "RATE_LIMITED": "Too many requests. Please wait a moment.",
-    "SESSION_EXPIRED": "Your session has expired. Please sign in again.",
-    "SESSION_STORE_DOWN": "The service is temporarily unavailable. Please try again later."
   }
 }
