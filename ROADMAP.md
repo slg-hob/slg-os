@@ -1,8 +1,19 @@
 # Roadmap
 
-Status as of 2026-10-19. The roadmap shows sequence and dependencies, not dates. It is updated whenever a PRD is approved or a phase is finished.
+Status as of 2026-10-20. The roadmap shows sequence and dependencies, not dates. It is updated whenever a PRD is approved or a phase is finished.
 
 Legend: **Done**, **Next**, **Planned**, **Later**. Owner gates (needs a decision or sign-off from the owner) are marked with ◆.
+
+## Work tracks and dependencies
+Three tracks run in parallel, each on its own feature branch and pull request; shared files (`ci.yml`, POMs, lock file, migration versions) are merged in small steps to keep conflicts low.
+
+| Track | Sequence | Starts when |
+|---|---|---|
+| A Core (critical path) | M2 identity and session, M3a registry, M3b store and gateway, M4 shell, M5 reference module and SDK, M6a to M6c | M1 done (2026-10-20, ADR-0013 accepted) |
+| B Visual language | V1 tokens and pipeline, V2 assets and catalogue; then V3a (needs M4), V3b, V3c (needs B5a), V4 (needs B5d), V5, V6, V7 (needs V3 to V6, B5b to B5d, B7a) | V1 and V2 now (no dependency on the core) |
+| C Platform capabilities | B1 audit and job framework (needs the audit table from M2), B2a/B2b (need M3), B3, B4, B5a to B5d, B6, B7a to B7c, B8 | B1 after M2 is merged |
+
+Open items on the way: Q59 (Lead-Radar backend facade) blocks B6 only; branch protection on `main` is an owner setting.
 
 ## Phase 0: Specification and spike (done)
 - Done: ADR-0001 to 0012 (identity, modules, UI, stack, permissions, trust, audit, deployment, Module Federation, window manager, backend-for-frontend).
@@ -19,7 +30,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 - Shell: sign-in, desktop with in-house window manager (two windows), language and theme switch, state components.
 - One reference module (backend and frontend) loaded through Module Federation.
 - E2E tests against the real stack, `pg_dump` backup script.
-- First step: [PRD-0003](docs/prd/0003-walking-skeleton.md) (repository layout, verified versions of JDK, Spring Boot and tools, CI, milestones M1 to M6c), approved 2026-10-19. M1 foundation (build, CI gate, self-test) delivered; next: M2.
+- First step: [PRD-0003](docs/prd/0003-walking-skeleton.md) (repository layout, verified versions of JDK, Spring Boot and tools, CI, milestones M1 to M6c), approved 2026-10-19. M1 foundation (build, CI gate, self-test) delivered 2026-10-20; next: M2 (track A) and V1 (track B).
 
 ## Phase 1b: Platform capabilities (PRD in progress)
 - [PRD-0004](docs/prd/0004-platform-capabilities.md) (approved 2026-10-19): milestones B1 to B8 (B2, B5 and B7 split into sub-milestones). Owner decisions 2026-10-19: four-eyes release is a process in the module repository (Q38); SDK and template via GitHub Packages and a template repository.
