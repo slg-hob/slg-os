@@ -1,0 +1,12 @@
+{
+  "AUTH_UNAVAILABLE": "Der Anmeldedienst ist zurzeit nicht erreichbar.",
+  "BAD_REQUEST": "Die Anfrage war ungültig.",
+  "CSRF": "Die Anfrage wurde aus Sicherheitsgründen abgelehnt. Bitte laden Sie die Seite neu.",
+  "FORBIDDEN": "Dafür fehlt Ihnen die Berechtigung.",
+  "INTERNAL_ERROR": "Es ist ein interner Fehler aufgetreten.",
+  "MISDIRECTED_HOST": "Diese Adresse wird nicht bedient.",
+  "NOT_FOUND": "Nicht gefunden.",
+  "RATE_LIMITED": "Zu viele Anfragen. Bitte warten Sie einen Moment.",
+  "SESSION_EXPIRED": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+  "SESSION_STORE_DOWN": "Der Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut."
+}

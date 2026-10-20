@@ -16,8 +16,8 @@ import tools.jackson.databind.json.JsonMapper;
 class ErrorCodeTranslationTest {
 
     private static JsonNode errors(String language) throws IOException {
-        Path file = Path.of("..", "..", "frontend", "shell", "src", "locales", language, "shell.json");
-        return JsonMapper.builder().build().readTree(Files.readString(file)).path("errors");
+        Path file = Path.of("..", "..", "frontend", "shell", "src", "locales", language, "errors.json");
+        return JsonMapper.builder().build().readTree(Files.readString(file));
     }
 
     @Test
