@@ -1,0 +1,13 @@
+diff --git a/docs/design/assets.lock b/docs/design/assets.lock
+index 9c44a6a..8c94856 100644
+--- a/docs/design/assets.lock
++++ b/docs/design/assets.lock
+@@ -28,7 +28,7 @@
+       "kind": "npm",
+       "version": "5.3.8",
+       "source": "https://registry.npmjs.org/bootstrap/-/bootstrap-5.3.8.tgz",
+-      "integrity": "sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tg==",
++      "integrity": "sha512-HP1SZDqaLDPwsNiqRqi5NcP0SSXciX2s9E+RyqJIIqGo+vJeN5AJVM98CXmW/Wux0nQ5L7jeWUdplCEf0Ee+tgXX",
+       "licence": "MIT",
+       "use": "SCSS compiled into the design-system stylesheet"
+     }
