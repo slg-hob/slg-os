@@ -14,3 +14,7 @@ coverage-*.json
 sbom*.json
 .idea/
 .vscode/
+deploy/.generated/
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/

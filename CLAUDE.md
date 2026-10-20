@@ -48,6 +48,14 @@ npm run test:coverage                           # Vitest with coverage gate (80 
 npm run test -w @slg-os/shell -- src/App.test.tsx   # a single test file
 npm run build
 
+# Compose stack and end-to-end tests (Docker; the same steps run in CI, one job per browser)
+deploy/scripts/gen-secrets.sh && deploy/scripts/test-ca.sh     # per-run secrets and test CA under deploy/.generated (needs openssl and keytool)
+echo "127.0.0.1 shell.slg.test sso.slg.test" | sudo tee -a /etc/hosts   # and trust deploy/.generated/tls/ca.crt, see docs/operations/stack.md
+set -a; . deploy/.generated/e2e.env; set +a
+docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml up -d --build --wait
+(cd e2e && npm ci --ignore-scripts && npx playwright install --with-deps && NODE_EXTRA_CA_CERTS=../deploy/.generated/tls/ca.crt npx playwright test)
+docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml config --format json | node scripts/ci/check-compose.mjs   # hardening rules
+
 # CI scripts and checks (no dependencies)
 node --test "scripts/ci/test/*.test.mjs"        # unit tests of the CI scripts
 node scripts/ci/check-docs.mjs                  # indices, status lines, links, file size, secret patterns

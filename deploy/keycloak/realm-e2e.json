@@ -1,0 +1,168 @@
+{
+  "realm": "slg-e2e",
+  "displayName": "SLG OS (E2E)",
+  "enabled": true,
+  "sslRequired": "all",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 300,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanLogin": 1800,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 43200,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "minimumQuickLoginWaitSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["de", "en"],
+  "defaultLocale": "de",
+  "groups": [
+    { "name": "slg-admins" },
+    { "name": "slg-users" }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "Test",
+      "email": "admin@slg.test",
+      "emailVerified": true,
+      "groups": ["/slg-admins"],
+      "credentials": [{ "type": "password", "value": "${E2E_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "username": "user-a",
+      "enabled": true,
+      "firstName": "User",
+      "lastName": "A",
+      "email": "user-a@slg.test",
+      "emailVerified": true,
+      "groups": ["/slg-users"],
+      "credentials": [{ "type": "password", "value": "${E2E_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "username": "user-b",
+      "enabled": true,
+      "firstName": "User",
+      "lastName": "B",
+      "email": "user-b@slg.test",
+      "emailVerified": true,
+      "groups": [],
+      "credentials": [{ "type": "password", "value": "${E2E_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "username": "disabled",
+      "enabled": false,
+      "firstName": "Disabled",
+      "lastName": "Test",
+      "email": "disabled@slg.test",
+      "emailVerified": true,
+      "groups": [],
+      "credentials": [{ "type": "password", "value": "${E2E_USER_PASSWORD}", "temporary": false }]
+    }
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "name": "test-directory",
+        "providerId": "ldap",
+        "config": {
+          "enabled": ["false"],
+          "priority": ["1"],
+          "editMode": ["READ_ONLY"],
+          "vendor": ["other"],
+          "connectionUrl": ["ldap://ldap:389"],
+          "bindDn": ["cn=admin,dc=slg,dc=test"],
+          "bindCredential": ["${LDAP_BIND_PASSWORD}"],
+          "usersDn": ["ou=people,dc=slg,dc=test"],
+          "authType": ["simple"],
+          "usernameLDAPAttribute": ["uid"],
+          "rdnLDAPAttribute": ["uid"],
+          "uuidLDAPAttribute": ["entryUUID"],
+          "userObjectClasses": ["inetOrgPerson"],
+          "searchScope": ["1"],
+          "importEnabled": ["true"],
+          "syncRegistrations": ["false"],
+          "fullSyncPeriod": ["-1"],
+          "changedSyncPeriod": ["600"],
+          "cachePolicy": ["DEFAULT"],
+          "startTls": ["false"]
+        }
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "slg-core",
+      "name": "SLG OS core",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${SLG_CORE_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": false,
+      "frontchannelLogout": false,
+      "redirectUris": ["${SLG_SHELL_BASE_URL}/core/auth/callback"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${SLG_SHELL_BASE_URL}/core/auth/signed-out",
+        "backchannel.logout.url": "http://core-backend:8080/core/internal/backchannel-logout",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "standard.token.exchange.enabled": "true"
+      },
+      "defaultClientScopes": ["basic", "profile", "email", "roles", "web-origins"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "true",
+            "claim.name": "groups",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "reference",
+      "name": "Reference module (audience for the token mechanism experiment, SK-19)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${REFERENCE_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "fullScopeAllowed": false,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ]
+}

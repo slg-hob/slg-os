@@ -54,7 +54,6 @@ class AuthController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthController.class);
     private static final String POPUP_TARGET = "/core/auth/popup-done";
-    private static final int ATTEMPTS_PER_MINUTE = 30;
 
     private final SlgProperties properties;
     private final OidcClient oidc;
@@ -72,7 +71,8 @@ class AuthController {
 
     AuthController(SlgProperties properties, OidcClient oidc, IdTokenValidator idTokens, LogoutTokenValidator logoutTokens,
             SessionService sessions, CsrfTokens signer, ClientIp clientIp, Clock clock, AuditService audit,
-            OidcAvailability availability, PageResponses pages) {
+            OidcAvailability availability, PageResponses pages,
+            @org.springframework.beans.factory.annotation.Value("${slg.auth.attempts-per-minute:30}") int attemptsPerMinute) {
         this.properties = properties;
         this.oidc = oidc;
         this.idTokens = idTokens;
@@ -84,7 +84,7 @@ class AuthController {
         this.audit = audit;
         this.availability = availability;
         this.pages = pages;
-        this.limiter = new RateLimiter(clock, ATTEMPTS_PER_MINUTE, Duration.ofMinutes(1));
+        this.limiter = new RateLimiter(clock, attemptsPerMinute, Duration.ofMinutes(1));
         this.shellBase = properties.shellBaseUrl().replaceAll("/+$", "");
     }
 

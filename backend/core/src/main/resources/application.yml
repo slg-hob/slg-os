@@ -6,6 +6,8 @@ slg:
   internal-hosts: ${SLG_INTERNAL_HOSTS:core-backend,localhost}
   trusted-proxy-cidrs: ${SLG_TRUSTED_PROXY_CIDRS:}
   bootstrap-admin-group: ${SLG_BOOTSTRAP_ADMIN_GROUP:}
+  auth:
+    attempts-per-minute: ${SLG_AUTH_ATTEMPTS_PER_MINUTE:30}
   oidc:
     issuer: ${SLG_OIDC_ISSUER:}
     client-id: ${SLG_OIDC_CLIENT_ID:slg-core}

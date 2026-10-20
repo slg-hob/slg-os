@@ -114,7 +114,7 @@ class AuthFlowIT extends IntegrationTestBase {
                 "<a href=\"/app/reference/notes\">");
         assertThat(response.getHeader("Referrer-Policy")).isEqualTo("no-referrer");
         assertThat(response.getHeader("Cache-Control")).isEqualTo("no-store");
-        assertThat(response.getHeader("Content-Security-Policy")).contains("default-src 'none'", "frame-ancestors 'none'");
+        assertThat(response.getHeader("Content-Security-Policy")).contains("default-src 'none'", "connect-src 'self'", "frame-ancestors 'none'");
 
         List<String> cookies = response.getHeaders("Set-Cookie");
         assertThat(cookies).hasSize(2);
