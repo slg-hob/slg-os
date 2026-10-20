@@ -1,0 +1,9 @@
+[
+  { "name": "space-1", "px": 4, "usage": "Smallest step; minimum inner padding of containers that clip (focus ring room)." },
+  { "name": "space-2", "px": 8, "usage": "Window frame inset; tight gaps." },
+  { "name": "space-3", "px": 12, "usage": "Compact padding." },
+  { "name": "space-4", "px": 16, "usage": "Default padding and gutters." },
+  { "name": "space-5", "px": 24, "usage": "Section spacing." },
+  { "name": "space-6", "px": 32, "usage": "Large gaps." },
+  { "name": "space-7", "px": 48, "usage": "Page-level spacing." }
+]

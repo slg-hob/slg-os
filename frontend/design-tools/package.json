@@ -1,0 +1,14 @@
+{
+  "name": "@slg-os/design-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Token generator, contrast check and asset lock verification (PRD-0005 VL-2, VL-5, VL-7).",
+  "bin": {
+    "design-tools": "./bin/design-tools.mjs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  }
+}

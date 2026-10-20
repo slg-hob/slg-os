@@ -9,5 +9,9 @@
   { "name": "coverage-regression", "command": "node scripts/ci/coverage.mjs compare ci/selftest/fixtures/coverage/current.json ci/selftest/fixtures/coverage/baseline.json" },
   { "name": "vulnerable-dependency", "command": "SCAN_PATH=ci/selftest/fixtures/vulnerable-npm scripts/ci/security-scan.sh" },
   { "name": "planted-private-key", "command": "{ printf -- '-----BEGIN %s %s-----\\n' RSA 'PRIVATE KEY'; printf 'MIIEowIBAAKCAQEA%s\\n' 'x7Qm0ZkYpJw2cD9fLhT3sVbN8aGr1eUiOoPyXzCq5W'; printf -- '-----END %s %s-----\\n' RSA 'PRIVATE KEY'; } > leaked.md && node scripts/ci/check-docs.mjs" },
-  { "name": "planted-token", "command": "printf 'token=%s%s\\n' 'ghp_' 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8' > leaked.txt && scripts/ci/security-scan.sh" }
+  { "name": "planted-token", "command": "printf 'token=%s%s\\n' 'ghp_' 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8' > leaked.txt && scripts/ci/security-scan.sh" },
+  { "name": "token-contrast", "patch": "token-contrast.patch", "command": "cd frontend && npm run contrast" },
+  { "name": "token-drift", "patch": "token-drift.patch", "command": "cd frontend && npm run tokens:check" },
+  { "name": "asset-hash", "patch": "asset-hash.patch", "command": "cd frontend && npm run assets:check" },
+  { "name": "module-design-rules", "command": "cp ci/selftest/fixtures/raw-colour/RawColour.tsx frontend/reference-module/src/RawColour.tsx && cd frontend && npx eslint ." }
 ]

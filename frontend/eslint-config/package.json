@@ -1,0 +1,14 @@
+{
+  "name": "@slg-os/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ESLint rules for module code: tokens only, no inline styles, no shell lookalikes (PRD-0005 VL-5 AC3).",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  }
+}

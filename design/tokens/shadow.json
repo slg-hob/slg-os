@@ -1,0 +1,5 @@
+[
+  { "name": "shadow-1", "light": "0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1)", "dark": "0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5)", "forced": "none", "usage": "Cards and tabs." },
+  { "name": "shadow-2", "light": "0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08)", "dark": "0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4)", "forced": "none", "usage": "Windows and menus." },
+  { "name": "shadow-3", "light": "0 12px 32px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.12)", "dark": "0 12px 32px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.5)", "forced": "none", "usage": "Dialogs." }
+]

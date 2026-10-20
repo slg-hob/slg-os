@@ -17,6 +17,7 @@ One file per significant architecture decision, numbered sequentially (`NNNN-sho
 | [0011](0011-window-manager.md) | Window manager | Proposed |
 | [0012](0012-browser-token-handling.md) | Browser token handling for federated remotes | Accepted |
 | [0013](0013-toolchain.md) | Repository layout, toolchain and CI tooling | Accepted |
+| [0023](0023-design-tokens-and-pipeline.md) | Design tokens, token pipeline and Bootstrap mapping | Proposed |
 
 ## Template
 

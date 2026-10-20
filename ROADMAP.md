@@ -42,6 +42,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 
 ## Visual language and design system (planned, after the skeleton)
 - [PRD-0005](docs/prd/0005-visual-language.md) (approved 2026-10-19): owner chose direction C "Soft glass" on 2026-10-19 (milestones V1, V2, V3a-c, V4 to V7).
+- V1 tokens and pipeline (track B): implemented on branch `claude/v1-tokens` (token sources and generator, Bootstrap mapping, contrast check with self-test, lint configurations, asset lock and licences); merges once the owner has approved the proposed [ADR-0023](docs/adr/0023-design-tokens-and-pipeline.md).
 - Own PRD: visual language, tokens, typography, iconography, desktop metaphor (start menu, desktop icons, tray), window chrome, motion.
 - Interactive prototypes for review, visual regression tests, usability test with users from two departments. ◆ design direction and sign-off by the owner (ideally with a person with design experience).
 - Fixes found in the spike screenshots: layout with banners, overlapping window controls, dark theme polish.

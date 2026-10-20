@@ -1,0 +1,28 @@
+{
+  "color": [
+    { "name": "paper", "light": "#ffffff", "dark": "#202020", "forced": "Canvas", "usage": "Page background." },
+    { "name": "ink", "light": "#202020", "dark": "#ffffff", "lightHc": "#000000", "darkHc": "#ffffff", "forced": "CanvasText", "usage": "Text." },
+    { "name": "pane", "light": "rgba(255, 255, 255, 0.5)", "dark": "rgba(0, 0, 0, 0.5)", "usage": "Translucent pane." }
+  ],
+  "type": [
+    { "kind": "family", "name": "font-sans", "value": "\"Test Sans\", sans-serif", "usage": "Text." },
+    { "kind": "scale", "name": "body", "size": 16, "lineHeight": 24, "weight": 400, "usage": "Text." }
+  ],
+  "space": [{ "name": "space-1", "px": 4, "usage": "Small." }],
+  "radius": [{ "name": "radius-md", "px": 8, "usage": "Medium." }],
+  "shadow": [{ "name": "shadow-1", "light": "0 1px 2px rgba(0, 0, 0, 0.1)", "dark": "0 1px 2px rgba(0, 0, 0, 0.5)", "forced": "none", "usage": "Card." }],
+  "motion": [{ "name": "duration-fast", "value": "120ms", "usage": "Fast." }],
+  "size": [{ "name": "top-bar-height", "px": 44, "usage": "Bar." }],
+  "pairs": [
+    { "id": "ink-on-paper", "fg": "ink", "bg": "paper", "role": "text" },
+    { "id": "ink-on-pane", "fg": "ink", "bg": "pane", "role": "text", "over": ["black", "white"] }
+  ],
+  "bootstrap": {
+    "entries": [
+      { "bs": "--bs-body-bg", "token": "paper" },
+      { "bs": "--bs-body-bg-rgb", "token": "paper", "channels": true },
+      { "bs": "--bs-body-color", "token": "ink" }
+    ],
+    "pairs": [{ "id": "bs-body", "fg": "--bs-body-color", "bg": "--bs-body-bg", "role": "text" }]
+  }
+}

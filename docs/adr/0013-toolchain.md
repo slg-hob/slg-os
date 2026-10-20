@@ -31,6 +31,7 @@ PRD-0003 (walking skeleton) asks for the repository layout, the pinned toolchain
 | `@types/react-dom` | 19.3.0 | `frontend/package.json` and lock file |
 | `@vitejs/plugin-react` | 6.1.2 | `frontend/package.json` and lock file |
 | `@vitest/coverage-v8` | 5.0.5 | `frontend/package.json` and lock file |
+| `bootstrap` | 5.3.8 | `frontend/package.json` and lock file |
 | `eslint` | 10.13.0 | `frontend/package.json` and lock file |
 | `eslint-plugin-i18next` | 6.1.5 | `frontend/package.json` and lock file |
 | `eslint-plugin-react-hooks` | 7.1.1 | `frontend/package.json` and lock file |
@@ -41,6 +42,8 @@ PRD-0003 (walking skeleton) asks for the repository layout, the pinned toolchain
 | `react` | 19.3.1 | `frontend/package.json` and lock file |
 | `react-dom` | 19.3.1 | `frontend/package.json` and lock file |
 | `react-i18next` | 17.1.0 | `frontend/package.json` and lock file |
+| `sass` | 1.105.2 | `frontend/package.json` and lock file |
+| `stylelint` | 17.16.0 | `frontend/package.json` and lock file |
 | `typescript` | 6.0.3 | `frontend/package.json` and lock file |
 | `typescript-eslint` | 8.72.0 | `frontend/package.json` and lock file |
 | `vite` | 8.3.4 | `frontend/package.json` and lock file |

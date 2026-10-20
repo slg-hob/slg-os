@@ -16,6 +16,8 @@ on:
       - 'frontend/vitest.shared.ts'
       - 'frontend/eslint.config.js'
       - 'frontend/package.json'
+      - 'design/**'
+      - 'frontend/design-tools/**'
 
 permissions:
   contents: read

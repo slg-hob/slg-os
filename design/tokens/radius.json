@@ -1,0 +1,8 @@
+[
+  { "name": "radius-sm", "px": 4, "usage": "Small elements." },
+  { "name": "radius-md", "px": 8, "usage": "Inputs, tiles, window content inset, multi-line controls." },
+  { "name": "radius-lg", "px": 12, "usage": "Cards and menu items." },
+  { "name": "radius-xl", "px": 16, "usage": "Windows, menus, widgets." },
+  { "name": "radius-2xl", "px": 20, "usage": "Dialogs." },
+  { "name": "radius-pill", "px": 9999, "usage": "Single-line controls only: buttons, chips, tabs, status badges, search field." }
+]
