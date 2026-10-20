@@ -4,6 +4,8 @@
 
 FROM eclipse-temurin:25-jdk@sha256:2d5d5e9b533342a565907c84f47a2ec298c40cde7b13a3ca85d4950fa456a641 AS build
 WORKDIR /src
+# The Maven wrapper needs unzip: without it, it would fetch the .tar.gz, which the pinned checksum does not cover.
+RUN apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
 COPY backend backend
