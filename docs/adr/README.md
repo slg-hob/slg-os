@@ -17,6 +17,8 @@ One file per significant architecture decision, numbered sequentially (`NNNN-sho
 | [0011](0011-window-manager.md) | Window manager | Proposed |
 | [0012](0012-browser-token-handling.md) | Browser token handling for federated remotes | Accepted |
 | [0013](0013-toolchain.md) | Repository layout, toolchain and CI tooling | Accepted |
+| [0015](0015-server-side-sessions.md) | Server-side sessions in PostgreSQL | Proposed |
+| [0016](0016-module-token-mechanism.md) | Audience-bound tokens for modules | Proposed |
 
 ## Template
 
