@@ -1,0 +1,50 @@
+# End-to-end override (PRD-0003 SK-18): the test realm with generated test users, the LDAP test directory and the e2e
+# environment of the core. Limits may only be lowered here, never raised (SK-16 AC2).
+#
+#   docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml up -d --build --wait
+#
+# Needs deploy/.generated from gen-secrets.sh and test-ca.sh. The e2e realm is refused by the core in production.
+
+services:
+  keycloak:
+    environment:
+      E2E_USER_PASSWORD: ${E2E_USER_PASSWORD:?run deploy/scripts/gen-secrets.sh and source deploy/.generated/e2e.env}
+    secrets: [kc_db_password, kc_bootstrap_admin_password, slg_core_client_secret, ldap_bind_password, reference_client_secret]
+    volumes:
+      - ./keycloak/realm-e2e.json:/opt/keycloak/data/import/realm.json:ro
+
+  core-backend:
+    environment:
+      SLG_ENV: e2e
+      SLG_REALM: slg-e2e
+      SLG_OIDC_ISSUER: https://${SLG_SSO_HOST:-sso.slg.test}/realms/slg-e2e
+      SLG_BOOTSTRAP_ADMIN_GROUP: /slg-admins
+
+  # Test directory; the federation in realm-e2e.json is switched on by the scenario that needs it (SK-18 AC1, M6a).
+  ldap:
+    image: osixia/openldap:1.5.0
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1
+    pids_limit: 256
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID, FOWNER]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      LDAP_ORGANISATION: SLG Test
+      LDAP_DOMAIN: slg.test
+      LDAP_TLS: "false"
+    secrets: [ldap_bind_password]
+    entrypoint: ["/bin/bash", "-c", "export LDAP_ADMIN_PASSWORD=\"$$(cat /run/secrets/ldap_bind_password)\"; exec /container/tool/run \"$$@\"", "--"]
+    networks: [backend]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+secrets:
+  ldap_bind_password:
+    file: ./.generated/secrets/ldap_bind_password
+  reference_client_secret:
+    file: ./.generated/secrets/reference_client_secret

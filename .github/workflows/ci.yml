@@ -208,19 +208,73 @@ jobs:
           git -c http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}" push -q --force "https://github.com/${GITHUB_REPOSITORY}.git" ci-baseline
 
   e2e:
-    name: End-to-end tests (empty set until the harness arrives in M2)
+    name: End-to-end tests (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      COMPOSE_PROJECT_NAME: slgos-${{ matrix.browser }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
-      - name: Run the scenarios if there are any
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 25
+      - name: Generate the per-run secrets and the test CA (nothing here is committed or uploaded)
         run: |
-          if ls e2e/specs/*.spec.ts >/dev/null 2>&1; then
-            echo "::error::E2E scenarios exist but this job does not run them yet"; exit 1
-          fi
-          echo "no E2E scenarios yet (the harness with three browsers is built in M2)"
+          deploy/scripts/gen-secrets.sh
+          deploy/scripts/test-ca.sh
+      - name: Host names and CA trust for the system and the browsers
+        run: |
+          echo "127.0.0.1 shell.slg.test sso.slg.test" | sudo tee -a /etc/hosts
+          sudo cp deploy/.generated/tls/ca.crt /usr/local/share/ca-certificates/slg-test-ca.crt
+          sudo update-ca-certificates
+          sudo apt-get install -y --no-install-recommends libnss3-tools
+          mkdir -p "$HOME/.pki/nssdb"
+          certutil -d "sql:$HOME/.pki/nssdb" -N --empty-password
+          certutil -d "sql:$HOME/.pki/nssdb" -A -t "C,," -n slg-test-ca -i deploy/.generated/tls/ca.crt
+      - name: Start the stack (production-mode Keycloak, PostgreSQL, proxy, core)
+        run: |
+          set -a; . deploy/.generated/e2e.env; set +a
+          docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml up -d --build --wait --wait-timeout 420
+      - name: Install the e2e dependencies and the browser
+        working-directory: e2e
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run the scenarios
+        working-directory: e2e
+        env:
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/deploy/.generated/tls/ca.crt
+        run: |
+          set -a; . ../deploy/.generated/e2e.env; set +a
+          npx playwright test --project=${{ matrix.browser }}
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          set -a; . deploy/.generated/e2e.env; set +a
+          docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml ps -a > compose-ps.txt || true
+          docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml logs --no-color --timestamps > compose-logs.txt || true
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: failure()
+        with:
+          name: e2e-${{ matrix.browser }}
+          path: |
+            e2e/test-results
+            e2e/playwright-report
+            compose-ps.txt
+            compose-logs.txt
+          retention-days: 3
 
   security:
     name: Security (dependencies, secrets, SBOM)
@@ -252,19 +306,30 @@ jobs:
           retention-days: 30
 
   compose-config:
-    name: Compose configuration (empty set until M2)
+    name: Compose configuration and hardening rules
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
-      - name: Validate every compose file
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+      - name: Every compose file is valid
+        env:
+          E2E_USER_PASSWORD: validation-only
         run: |
-          shopt -s nullglob
-          files=(deploy/compose*.yaml)
-          if [ ${#files[@]} -eq 0 ]; then echo "no compose files yet (the stack arrives in M2)"; exit 0; fi
-          for f in "${files[@]}"; do docker compose -f "$f" config -q; done
+          docker compose -f deploy/compose.yaml config -q
+          docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml config -q
+      - name: Static hardening assertions on the merged configuration (SK-16 AC2, AC3)
+        env:
+          E2E_USER_PASSWORD: validation-only
+        run: |
+          docker compose -f deploy/compose.yaml -f deploy/compose.e2e.yaml config --format json | node scripts/ci/check-compose.mjs
+      - name: Shell scripts of the stack
+        run: |
+          for f in deploy/scripts/*.sh deploy/postgres/init/*.sh deploy/keycloak/entrypoint.sh; do bash -n "$f"; done
 
   gate:
     name: gate

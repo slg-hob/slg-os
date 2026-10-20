@@ -1,0 +1,11 @@
+.git
+**/target
+**/node_modules
+**/dist
+**/coverage
+deploy/.generated
+e2e/test-results
+e2e/playwright-report
+docs
+ci
+*.md

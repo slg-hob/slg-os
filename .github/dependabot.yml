@@ -12,3 +12,12 @@ updates:
   - package-ecosystem: npm
     directory: /ci/docs-tools
     schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /backend/core
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /deploy/keycloak
+    schedule: { interval: weekly }

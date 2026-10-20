@@ -1,0 +1,21 @@
+{
+  "name": "@slg-os/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end tests against the real compose stack (PRD-0003 SK-18). Own lock file; not part of the frontend workspaces.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3"
+  }
+}

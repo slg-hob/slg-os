@@ -1,0 +1,112 @@
+{
+  "realm": "slg",
+  "displayName": "SLG OS",
+  "enabled": true,
+  "sslRequired": "all",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 300,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanLogin": 1800,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 43200,
+  "offlineSessionIdleTimeout": 2592000,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "minimumQuickLoginWaitSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "internationalizationEnabled": true,
+  "supportedLocales": ["de", "en"],
+  "defaultLocale": "de",
+  "groups": [
+    { "name": "slg-admins" },
+    { "name": "slg-users" }
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "name": "company-directory",
+        "providerId": "ldap",
+        "config": {
+          "enabled": ["true"],
+          "priority": ["1"],
+          "editMode": ["READ_ONLY"],
+          "vendor": ["ad"],
+          "connectionUrl": ["${LDAP_URL}"],
+          "bindDn": ["${LDAP_BIND_DN}"],
+          "bindCredential": ["${LDAP_BIND_PASSWORD}"],
+          "usersDn": ["${LDAP_USERS_DN}"],
+          "authType": ["simple"],
+          "usernameLDAPAttribute": ["sAMAccountName"],
+          "rdnLDAPAttribute": ["cn"],
+          "uuidLDAPAttribute": ["objectGUID"],
+          "userObjectClasses": ["person, organizationalPerson, user"],
+          "searchScope": ["2"],
+          "pagination": ["true"],
+          "importEnabled": ["true"],
+          "syncRegistrations": ["false"],
+          "fullSyncPeriod": ["-1"],
+          "changedSyncPeriod": ["600"],
+          "cachePolicy": ["DEFAULT"],
+          "startTls": ["false"]
+        }
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "slg-core",
+      "name": "SLG OS core",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${SLG_CORE_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": false,
+      "frontchannelLogout": false,
+      "redirectUris": ["${SLG_SHELL_BASE_URL}/core/auth/callback"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${SLG_SHELL_BASE_URL}/core/auth/signed-out",
+        "backchannel.logout.url": "http://core-backend:8080/core/internal/backchannel-logout",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "standard.token.exchange.enabled": "true"
+      },
+      "defaultClientScopes": ["basic", "profile", "email", "roles", "web-origins"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "true",
+            "claim.name": "groups",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ]
+}
