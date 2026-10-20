@@ -1,0 +1,10 @@
+{
+  "name": "@slg-os/frontend-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-exclude=**/*.test.mjs"
+  }
+}

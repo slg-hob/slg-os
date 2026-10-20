@@ -1,0 +1,39 @@
+diff --git a/backend/sdk-backend/src/main/java/de/systemlogistics/slgos/sdk/Untested.java b/backend/sdk-backend/src/main/java/de/systemlogistics/slgos/sdk/Untested.java
+new file mode 100644
+index 0000000..40b93d6
+--- /dev/null
++++ b/backend/sdk-backend/src/main/java/de/systemlogistics/slgos/sdk/Untested.java
+@@ -0,0 +1,33 @@
++package de.systemlogistics.slgos.sdk;
++
++/** Selftest fault: lots of lines without a single test. */
++public final class Untested {
++    private Untested() {
++    }
++
++    public static int a(int x) {
++        int y = x + 1;
++        y = y * 2;
++        y = y - 3;
++        y = y + 4;
++        y = y * 5;
++        y = y - 6;
++        y = y + 7;
++        y = y * 8;
++        y = y - 9;
++        return y;
++    }
++
++    public static int b(int x) {
++        int y = x + 10;
++        y = y * 11;
++        y = y - 12;
++        y = y + 13;
++        y = y * 14;
++        y = y - 15;
++        y = y + 16;
++        y = y * 17;
++        y = y - 18;
++        return y;
++    }
++}

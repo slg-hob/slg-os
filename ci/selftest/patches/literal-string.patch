@@ -1,0 +1,13 @@
+diff --git a/frontend/shell/src/Bad.tsx b/frontend/shell/src/Bad.tsx
+new file mode 100644
+index 0000000..77deb9b
+--- /dev/null
++++ b/frontend/shell/src/Bad.tsx
+@@ -0,0 +1,7 @@
++export function Bad() {
++  return (
++    <div title="Hallo Welt" aria-label="Schließen">
++      Text im Markup
++    </div>
++  );
++}

@@ -1,0 +1,7 @@
+{
+  "app": {
+    "title": "SLG OS",
+    "loading": "Wird geladen",
+    "welcome": "Willkommen, {name}"
+  }
+}

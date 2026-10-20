@@ -1,0 +1,26 @@
+# Changes to the quality gate and to the build and coverage configuration need the owner's review (PRD-0003 SK-2 AC4).
+# Branch protection must require code owner review (docs/branch-protection.md).
+/.github/                         @slg-hob
+/scripts/ci/                      @slg-hob
+/ci/                              @slg-hob
+/pom.xml                          @slg-hob
+/.mvn/                            @slg-hob
+/frontend/vitest.shared.ts        @slg-hob
+/frontend/eslint.config.js        @slg-hob
+/frontend/tools/                  @slg-hob
+/docs/adr/0013-versions.json      @slg-hob
+/deploy/                          @slg-hob
+/design/                          @slg-hob
+/mvnw                             @slg-hob
+/mvnw.cmd                         @slg-hob
+/backend/*/pom.xml                @slg-hob
+/frontend/package.json            @slg-hob
+/frontend/package-lock.json       @slg-hob
+/frontend/.npmrc                  @slg-hob
+/frontend/tsconfig.base.json      @slg-hob
+/frontend/*/vitest.config.ts      @slg-hob
+/.gitignore                       @slg-hob
+/.markdownlint-cli2.jsonc         @slg-hob
+/docs/branch-protection.md        @slg-hob
+/docs/adr/                        @slg-hob
+/.github/dependabot.yml           @slg-hob

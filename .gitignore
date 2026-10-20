@@ -1,0 +1,16 @@
+target/
+node_modules/
+coverage/
+dist/
+.env
+*.log
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+coverage-*.json
+sbom*.json
+.idea/
+.vscode/

@@ -1,0 +1,52 @@
+name: Gate self-test
+
+# Proves that the quality gate fails for each deliberate fault (PRD-0003 SK-2 AC3). Not part of the required gate.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ci/**'
+      - 'scripts/ci/**'
+      - '.github/workflows/**'
+      - 'pom.xml'
+      - 'backend/*/pom.xml'
+      - 'frontend/vitest.shared.ts'
+      - 'frontend/eslint.config.js'
+      - 'frontend/package.json'
+
+permissions:
+  contents: read
+
+env:
+  TRIVY_VERSION: v0.73.0
+
+jobs:
+  selftest:
+    name: Each fault turns a check red
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+      - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
+        with:
+          version: ${{ env.TRIVY_VERSION }}
+      - name: Populate the local Maven repository for the scanner
+        run: ./mvnw -q compile dependency:resolve
+      - name: Install frontend dependencies
+        run: npm ci --ignore-scripts
+        working-directory: frontend
+      - name: Apply each fault and assert the matching check fails
+        run: node scripts/ci/selftest.mjs

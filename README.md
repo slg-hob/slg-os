@@ -2,7 +2,7 @@
 
 SLG Operating System: a locally hosted, web-based platform with an OS-like desktop for internal tools and automations of System Logistics. It signs users in against the local Active Directory, authorizes by AD groups, and hosts independently developed modules through a mandatory, versioned module contract.
 
-**Status:** specification phase. No code yet.
+**Status:** implementation phase. The specification (PRD-0001 to PRD-0005) is approved; milestone M1 of the walking skeleton (build and CI foundation) is in place. Build and test commands are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Decisions at a glance
 
@@ -23,6 +23,16 @@ SLG Operating System: a locally hosted, web-based platform with an OS-like deskt
 - [`docs/prd/`](docs/prd/README.md): product requirements (always English), starting with [PRD-0001 Platform core](docs/prd/0001-platform-core.md)
 - [`docs/reviews/`](docs/reviews/): review checklists for specifications, implementations and module registration
 - [`docs/branch-protection.md`](docs/branch-protection.md): branch protection settings for `main` (pull request and CI gate)
+
+## Build and test
+
+```bash
+./mvnw verify                                  # backend: build, unit and integration tests, JaCoCo gate (JDK 25)
+cd frontend && npm ci --ignore-scripts         # frontend dependencies from the lock file
+npm run lint && npm run typecheck && npm run i18n:check && npm run test:coverage && npm run build
+```
+
+All commands, including the CI script checks, are listed in [`CLAUDE.md`](CLAUDE.md).
 
 ## Workflow in short
 

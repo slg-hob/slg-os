@@ -16,6 +16,7 @@ One file per significant architecture decision, numbered sequentially (`NNNN-sho
 | [0010](0010-module-federation-approach.md) | Module Federation approach | Proposed |
 | [0011](0011-window-manager.md) | Window manager | Proposed |
 | [0012](0012-browser-token-handling.md) | Browser token handling for federated remotes | Accepted |
+| [0013](0013-toolchain.md) | Repository layout, toolchain and CI tooling | Proposed |
 
 ## Template
 

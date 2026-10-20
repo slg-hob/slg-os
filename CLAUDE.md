@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-`slg-os` ("SLG Operating System", System Logistics) is a greenfield project in the specification phase. The repository contains documentation only (`docs/adr`, `docs/prd`, `docs/reviews`); no code or build files exist yet. **Build, lint and test commands do not exist yet.** When the project skeleton is created, add the real commands here (build, run, lint, full test run, single test, coverage) instead of guessing.
+`slg-os` ("SLG Operating System", System Logistics) is in its implementation phase. The specification is complete (PRD-0001 to PRD-0005, ADR-0001 to ADR-0013). The repository contains the build and CI foundation of milestone M1 (PRD-0003): a Maven multi-module backend, an npm workspace frontend, the CI quality gate and its scripts. Features follow milestone by milestone (`ROADMAP.md`).
 
-Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there; start from PRD-0001), review checklists in `docs/reviews/` (use them for the independent review agents), the plan in `ROADMAP.md`, spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`).
+Documentation map: architecture decisions in `docs/adr/` (accepted ADRs are not edited, supersede them with a new ADR), PRDs in `docs/prd/` (template and index there), review checklists in `docs/reviews/` (use them for the independent review agents), the plan in `ROADMAP.md`, spike reports in `docs/spikes/` (evidence behind proposed ADRs; the spike code lives only on branch `spike/shell`). The pinned toolchain versions are in `docs/adr/0013-toolchain.md`, generated from `docs/adr/0013-versions.json`.
 
 ## What slg-os is
 
@@ -27,6 +27,36 @@ Modules are added incrementally and lightly: registering a module and assigning 
 - Identity: Keycloak federating the Active Directory, OIDC (ADR-0001); the core is a backend-for-frontend, tokens never reach the browser (ADR-0012)
 - Deployment: Docker, single server with Docker Compose, fewer than 100 users (ADR-0009); on-prem hosting without cloud runtime dependencies (outbound pull of module images from ghcr.io is allowed, PRD-0001 Q10/Q18)
 - Layout: monorepo for the core (ADR-0004)
+
+## Commands
+
+Prerequisites: JDK 25 (Temurin), Node.js 22, Maven through the wrapper `./mvnw` (Maven 3.9.16, checksum pinned), Docker for the compose stack (from M2). Run all commands from the repository root unless noted.
+
+```bash
+# Backend (Maven multi-module, Spring Boot 4.1)
+./mvnw verify                                   # build, unit and integration tests, JaCoCo gate (80 % lines per module)
+./mvnw -pl backend/core -am verify              # one module and what it depends on
+./mvnw -pl backend/sdk-backend -Dtest=ContractVersionTest test   # a single test class (unit tests)
+node scripts/ci/coverage.mjs critical           # gateway/session/security package trees at 90 %
+
+# Frontend (npm workspaces in frontend/)
+cd frontend && npm ci --ignore-scripts          # install from the lock file only
+npm run lint                                    # ESLint, includes the ban on literal user-visible strings
+npm run typecheck && npm run i18n:check         # TypeScript, de/en key parity and ICU validity
+npm run test:coverage                           # Vitest with coverage gate (80 % lines per package)
+npm run test -w @slg-os/shell -- src/App.test.tsx   # a single test file
+npm run build
+
+# CI scripts and checks (no dependencies)
+node --test "scripts/ci/test/*.test.mjs"        # unit tests of the CI scripts
+node scripts/ci/check-docs.mjs                  # indices, status lines, links, file size, secret patterns
+node scripts/ci/check-workflows.mjs             # pinned actions, no privileged PR trigger, no integrity-weakening flags
+node scripts/ci/check-versions.mjs [--render]   # version table against the build files (render rewrites the ADR table)
+node scripts/ci/coverage.mjs report out.json    # coverage report; compare with a baseline: coverage.mjs compare current baseline
+CI=true node scripts/ci/selftest.mjs [fault]    # destructive: applies deliberate faults, CI only
+```
+
+The coverage gates (80 % lines per module or package, 90 % for `gateway`, `session`, `security`, regression limit 2 points) are part of the build and are never lowered. Dependency changes go through `docs/adr/0013-versions.json` and the lock file together.
 
 ## Workflows
 

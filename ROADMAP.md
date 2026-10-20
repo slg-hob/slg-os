@@ -19,7 +19,7 @@ Goal: the thinnest end-to-end slice on the real stack, so everything after it bu
 - Shell: sign-in, desktop with in-house window manager (two windows), language and theme switch, state components.
 - One reference module (backend and frontend) loaded through Module Federation.
 - E2E tests against the real stack, `pg_dump` backup script.
-- First step: [PRD-0003](docs/prd/0003-walking-skeleton.md) (repository layout, verified versions of JDK, Spring Boot and tools, CI, milestones M1 to M6c), approved 2026-10-19. Next: M1 foundation.
+- First step: [PRD-0003](docs/prd/0003-walking-skeleton.md) (repository layout, verified versions of JDK, Spring Boot and tools, CI, milestones M1 to M6c), approved 2026-10-19. M1 foundation (build, CI gate, self-test) delivered; next: M2.
 
 ## Phase 1b: Platform capabilities (PRD in progress)
 - [PRD-0004](docs/prd/0004-platform-capabilities.md) (approved 2026-10-19): milestones B1 to B8 (B2, B5 and B7 split into sub-milestones). Owner decisions 2026-10-19: four-eyes release is a process in the module repository (Q38); SDK and template via GitHub Packages and a template repository.

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Dependency, secret and (later) image scanning with Trivy (ADR-0013). Fails on HIGH or CRITICAL findings.
+# Only the deliberately vulnerable self-test fixture is skipped; SCAN_PATH selects the directory (default: repository root); SBOM_OUT, if set, also writes a CycloneDX SBOM.
+set -euo pipefail
+
+path="${SCAN_PATH:-.}"
+skip_args=()
+# the deliberately vulnerable fixture is only scanned when it is the explicit target (self-test)
+if [ "$path" = "." ]; then skip_args=(--skip-dirs ci/selftest/fixtures/vulnerable-npm); fi
+ignore_args=()
+if [ -f ci/trivyignore.yaml ]; then ignore_args=(--ignorefile ci/trivyignore.yaml); fi
+
+trivy fs --quiet --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 \
+  "${skip_args[@]}" "${ignore_args[@]}" "$path"
+
+if [ -n "${SBOM_OUT:-}" ]; then
+  trivy fs --quiet --format cyclonedx --output "$SBOM_OUT" \
+    "${skip_args[@]}" "$path"
+fi
