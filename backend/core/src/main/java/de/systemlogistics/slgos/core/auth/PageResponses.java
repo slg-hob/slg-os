@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 class PageResponses {
 
-    static final String CSP = "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; base-uri 'none'; "
+    static final String CSP = "default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; "
             + "form-action 'none'; frame-ancestors 'none'";
 
     private final PreSessionPages pages;
