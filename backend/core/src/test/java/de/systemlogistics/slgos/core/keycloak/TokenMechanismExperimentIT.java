@@ -42,10 +42,28 @@ class TokenMechanismExperimentIT {
         assumeTrue(KeycloakStack.dockerAvailable(), "Docker is not available");
         KeycloakStack keycloak = KeycloakStack.shared();
         String admin = keycloak.adminToken();
+        String coreId = clientId(keycloak, admin, "slg-core");
+        try {
+            experiment(keycloak, admin, coreId);
+        } finally {
+            // The Keycloak instance is shared with the other tests: put the client back as the realm file defines it.
+            JsonNode rep = keycloak.admin("GET", "/" + REALM + "/clients/" + coreId, admin, null).json(mapper);
+            ((tools.jackson.databind.node.ObjectNode) rep).put("directAccessGrantsEnabled", false);
+            keycloak.admin("PUT", "/" + REALM + "/clients/" + coreId, admin, mapper.writeValueAsString(rep));
+        }
+    }
+
+    private String login(KeycloakStack keycloak, String scope) {
+        Reply login = keycloak.postForm(TOKEN, Map.of("grant_type", "password", "username", "user-a",
+                "password", KeycloakStack.E2E_PASSWORD, "scope", scope), CORE_AUTH);
+        assertThat(login.status()).as("password grant for the experiment").isEqualTo(200);
+        return login.json(mapper).path("refresh_token").asString();
+    }
+
+    private void experiment(KeycloakStack keycloak, String admin, String coreId) throws Exception {
         Map<String, Object> report = new LinkedHashMap<>();
 
         // Preparation through the admin API, as the provisioner will do it per module: an audience scope on the core client.
-        String coreId = clientId(keycloak, admin, "slg-core");
         JsonNode coreRep = keycloak.admin("GET", "/" + REALM + "/clients/" + coreId, admin, null).json(mapper);
         ((tools.jackson.databind.node.ObjectNode) coreRep).put("directAccessGrantsEnabled", true);
         assertThat(keycloak.admin("PUT", "/" + REALM + "/clients/" + coreId, admin, mapper.writeValueAsString(coreRep)).status())
@@ -89,8 +107,14 @@ class TokenMechanismExperimentIT {
         // (b) refresh-token down-scoping: the response rotates the refresh token, grants must be serialised.
         Map<String, String> down = new LinkedHashMap<>();
         down.put("grant_type", "refresh_token");
-        down.put("refresh_token", refreshToken);
+        // A refresh grant can only narrow the scopes of the original login, so the login names the module scope.
+        down.put("refresh_token", login(keycloak, "openid reference"));
         down.put("scope", "reference");
+        Map<String, String> notGranted = new LinkedHashMap<>(down);
+        notGranted.put("refresh_token", refreshToken);
+        Reply plain = keycloak.postForm(TOKEN, notGranted, CORE_AUTH);
+        Map<String, Object> plainOutcome = outcome(plain, "login without the module scope, refresh asks for it");
+        report.put("b0_scopeNotInTheOriginalLogin", plainOutcome);
         Reply first = keycloak.postForm(TOKEN, down, CORE_AUTH);
         Map<String, Object> firstOutcome = outcome(first, "scope=reference");
         report.put("b_downScoping_first", firstOutcome);

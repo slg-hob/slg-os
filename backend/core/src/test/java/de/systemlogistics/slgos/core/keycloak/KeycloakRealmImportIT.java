@@ -110,21 +110,21 @@ class KeycloakRealmImportIT {
         assertThat(e2e.get(0).path("config").path("enabled").get(0).asString()).isEqualTo("false");
     }
 
-    private String loginPage(String realm, String query) {
+    private String loginPage(String realm, String query, String language) {
         Reply reply = keycloak.send("GET", "/realms/" + realm + "/protocol/openid-connect/auth?client_id=slg-core&response_type=code"
                 + "&scope=openid&redirect_uri=https%3A%2F%2Fshell.slg.test%2Fcore%2Fauth%2Fcallback&state=s&nonce=n&code_challenge=" + "a".repeat(43)
-                + "&code_challenge_method=S256" + query, Map.of(), null);
+                + "&code_challenge_method=S256" + query, language == null ? Map.of() : Map.of("Accept-Language", language), null);
         assertThat(reply.status()).isEqualTo(200);
         return reply.body();
     }
 
     @Test
     void theLoginPageRendersInGermanAndInEnglish() {
-        String german = loginPage("slg-e2e", "&kc_locale=de");
+        String german = loginPage("slg-e2e", "", "de-DE");
         assertThat(german).contains("lang=\"de\"").contains("Anmelden");
-        String english = loginPage("slg-e2e", "&kc_locale=en");
+        String english = loginPage("slg-e2e", "", "en-US");
         assertThat(english).contains("lang=\"en\"").contains("Sign in");
-        assertThat(loginPage("slg-e2e", "")).as("the realm default is German").contains("lang=\"de\"");
+        assertThat(loginPage("slg-e2e", "", null)).as("the realm default is German").contains("lang=\"de\"");
     }
 
     @Test
