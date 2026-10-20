@@ -36,6 +36,7 @@ Prerequisites: JDK 25 (Temurin), Node.js 22, Maven through the wrapper `./mvnw` 
 # Backend (Maven multi-module, Spring Boot 4.1)
 ./mvnw verify                                   # build, unit and integration tests, JaCoCo gate (80 % lines per module)
 ./mvnw -pl backend/core -am verify              # one module and what it depends on
+SLG_TEST_PG_URL=jdbc:postgresql://localhost:5432/postgres SLG_TEST_PG_USER=postgres ./mvnw -pl backend/core -am verify   # integration tests against your own PostgreSQL instead of Testcontainers (no Docker needed)
 ./mvnw -pl backend/sdk-backend -Dtest=ContractVersionTest test   # a single test class (unit tests)
 node scripts/ci/coverage.mjs critical           # gateway/session/security package trees at 90 %
 

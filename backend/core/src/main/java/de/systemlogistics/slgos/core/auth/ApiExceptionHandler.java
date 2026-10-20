@@ -9,6 +9,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.transaction.TransactionException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -35,8 +36,8 @@ class ApiExceptionHandler {
         problems.write(response, ErrorCode.AUTH_UNAVAILABLE);
     }
 
-    @ExceptionHandler(DataAccessException.class)
-    void database(DataAccessException e, HttpServletResponse response) throws IOException {
+    @ExceptionHandler({DataAccessException.class, TransactionException.class})
+    void database(Exception e, HttpServletResponse response) throws IOException {
         LOG.error("database access failed", e);
         problems.write(response, ErrorCode.SESSION_STORE_DOWN);
     }

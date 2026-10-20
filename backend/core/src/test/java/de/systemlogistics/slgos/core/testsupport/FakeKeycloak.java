@@ -55,6 +55,7 @@ public class FakeKeycloak implements AutoCloseable {
     private final Supplier<Instant> clock;
     private final int port;
     private HttpServer server;
+    private boolean running;
 
     private final Map<String, Code> codes = new ConcurrentHashMap<>();
     private final Map<String, Refresh> liveRefreshTokens = new ConcurrentHashMap<>();
@@ -89,6 +90,7 @@ public class FakeKeycloak implements AutoCloseable {
             server.createContext(base + "/certs", this::certs);
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
+            running = true;
             return server.getAddress().getPort();
         } catch (IOException e) {
             throw new IllegalStateException(e);
@@ -96,18 +98,23 @@ public class FakeKeycloak implements AutoCloseable {
     }
 
     /** Stops the server; connections to its port are refused afterwards. */
-    public void stop() {
-        server.stop(0);
+    public synchronized void stop() {
+        if (running) {
+            server.stop(0);
+            running = false;
+        }
     }
 
-    /** Starts the server again on the same port. */
-    public void restart() {
-        start(port);
+    /** Starts the server again on the same port; does nothing if it is running. */
+    public synchronized void restart() {
+        if (!running) {
+            start(port);
+        }
     }
 
     @Override
     public void close() {
-        server.stop(0);
+        stop();
     }
 
     public String issuer() {

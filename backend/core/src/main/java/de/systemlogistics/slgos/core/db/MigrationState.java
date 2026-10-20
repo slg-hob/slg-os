@@ -24,12 +24,12 @@ public final class MigrationState {
         return appliedCount;
     }
 
-    void migrated(int applied) {
+    public void migrated(int applied) {
         this.appliedCount = applied;
         status.set(Status.MIGRATED);
     }
 
-    void failed(String reason) {
+    public void failed(String reason) {
         this.failure = reason;
         status.set(Status.FAILED);
     }

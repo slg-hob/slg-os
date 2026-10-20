@@ -22,6 +22,7 @@ SLG Operating System: a locally hosted, web-based platform with an OS-like deskt
 - [`docs/adr/`](docs/adr/README.md): architecture decision records
 - [`docs/prd/`](docs/prd/README.md): product requirements (always English), starting with [PRD-0001 Platform core](docs/prd/0001-platform-core.md)
 - [`docs/reviews/`](docs/reviews/): review checklists for specifications, implementations and module registration
+- [`docs/operations/configuration.md`](docs/operations/configuration.md): environment variables, secrets, database roles, health and failure behaviour of the core (German and English)
 - [`docs/branch-protection.md`](docs/branch-protection.md): branch protection settings for `main` (pull request and CI gate)
 
 ## Build and test

@@ -19,6 +19,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -66,7 +67,7 @@ public class SessionFilter extends OncePerRequestFilter {
             if (session.isPresent() && request.getHeader(BACKGROUND_HEADER) == null) {
                 sessions.touch(session.get(), false);
             }
-        } catch (DataAccessException e) {
+        } catch (DataAccessException | TransactionException e) {
             LOG.error("session store unavailable", e);
             problems.write(response, ErrorCode.SESSION_STORE_DOWN);
             return;

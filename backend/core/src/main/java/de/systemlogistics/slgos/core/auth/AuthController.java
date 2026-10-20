@@ -39,6 +39,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.TransactionException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -210,7 +211,7 @@ class AuthController {
                 LOG.warn("back-channel logout token replayed");
                 return ResponseEntity.badRequest().header(HttpHeaders.CACHE_CONTROL, "no-store").build();
             }
-        } catch (DataAccessException e) {
+        } catch (DataAccessException | TransactionException e) {
             LOG.error("session store unavailable during back-channel logout", e);
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).header(HttpHeaders.CACHE_CONTROL, "no-store").build();
         }
